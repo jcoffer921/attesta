@@ -1,0 +1,46 @@
+{% extends "app_base.html" %}{% block app_content %}
+<div class="page-header">
+  <div>
+    <p class="eyebrow">Pipeline provenance</p>
+    <h1>{{ run.pipeline_slug }} · run #{{ run.pk }}</h1>
+    <p>
+      Permit <b>{{ run.permit_slug }}</b>
+      · <a href="{% url 'permit_rules' run.permit_slug %}">view permit rules</a>
+      · <a href="{% url 'validation_results' run.pk %}">view validation results</a>
+    </p>
+  </div>
+</div>
+
+{% if run.status == "failed" %}
+<section class="card" style="padding:20px">
+  <p class="badge danger">Run failed: {{ run.error_code }}</p>
+  <p>{{ run.error_message }}</p>
+</section>
+{% endif %}
+
+{% for record in timeline %}
+<section class="card" style="padding:18px;margin-bottom:16px" data-record-id="{{ record.record_id }}">
+  <div class="card-header"><h2>Record {{ record.record_id }}</h2></div>
+  <ol class="provenance-list">
+    {% for entry in record.steps %}
+    <li class="provenance-step">
+      <span class="badge info">{{ entry.step }}</span>
+      <div class="provenance-values">
+        <div><b>Before</b><pre>{{ entry.before }}</pre></div>
+        <div><b>After</b><pre>{{ entry.after }}</pre></div>
+      </div>
+      <p>{{ entry.note }}</p>
+    </li>
+    {% endfor %}
+    {% if record.rejection %}
+    <li class="provenance-step provenance-rejected">
+      <span class="badge danger">rejected at {{ record.rejection.step }}</span>
+      <p>{{ record.rejection.reason }}</p>
+    </li>
+    {% endif %}
+  </ol>
+</section>
+{% empty %}
+<p>No records were processed by this run.</p>
+{% endfor %}
+{% endblock %}

@@ -1,0 +1,98 @@
+{% extends "app_base.html" %}{% block app_content %}
+<div class="page-header">
+  <div>
+    <p class="eyebrow">Validation results</p>
+    <h1>{{ run.permit_slug }} · {{ run.period|default:"no period" }}</h1>
+    <p>
+      Pipeline <b>{{ run.pipeline_slug }}</b> · run #{{ run.pk }} · started {{ run.started_at }}
+      · <a href="{% url 'permit_rules' run.permit_slug %}">view permit rules</a>
+      · <a href="{% url 'provenance_timeline' run.pk %}">view pipeline provenance</a>
+    </p>
+  </div>
+</div>
+
+{% if run.status == "failed" %}
+<section class="card" style="padding:20px">
+  <p class="badge danger">Run failed: {{ run.error_code }}</p>
+  <p>{{ run.error_message }}</p>
+</section>
+{% else %}
+<section class="card table-card">
+  <div class="table-scroll">
+    <table data-table>
+      <thead>
+        <tr><th>Outfall</th><th>Parameter</th><th>Clause</th><th>Status</th></tr>
+      </thead>
+      <tbody>
+        {% for result in results %}
+        <tr data-result-row="{{ result.pk }}">
+          <td>{{ result.outfall }}</td>
+          <td>{{ result.parameter }}</td>
+          <td>{{ result.clause }}</td>
+          <td><span class="{{ result.badge_class }}" data-status="{{ result.status }}">{{ result.status }}</span></td>
+        </tr>
+        <tr id="trace-{{ result.pk }}" class="trace-row">
+          <td colspan="4">
+            <div class="trace-panel">
+              <div class="trace-grid">
+                <div><b>Sample IDs</b><p>{{ result.sample_ids|join:", " }}</p></div>
+                <div><b>Sample values</b><p>{{ result.sample_values|join:", " }}</p></div>
+                <div><b>Computed value</b><p>{{ result.computed_value }}</p></div>
+                <div><b>Threshold</b><p>{{ result.threshold }}</p></div>
+                <div><b>Comparison</b><p>{{ result.comparison }}</p></div>
+              </div>
+              <p><b>Engine reason:</b> {{ result.reason }}</p>
+              {% if result.gemini_explanation %}
+              <p class="ai-summary"><b>AI explanation:</b> {{ result.gemini_explanation }}</p>
+              {% endif %}
+              {% if result.clause == "monthly-avg" %}
+              {% with key=result.outfall|stringformat:"s"|add:"-"|add:result.parameter %}
+              {% if key in chart_series %}
+              <canvas class="chart-canvas" data-chart-series="{{ key }}" width="480" height="160"></canvas>
+              {% endif %}
+              {% endwith %}
+              {% endif %}
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endif %}
+
+{{ chart_series|json_script:"chart-series-data" }}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+<script>
+(function () {
+  var data = JSON.parse(document.getElementById('chart-series-data').textContent);
+  document.querySelectorAll('[data-chart-series]').forEach(function (canvas) {
+    var series = data[canvas.dataset.chartSeries];
+    if (!series) return;
+    new Chart(canvas.getContext('2d'), {
+      type: 'line',
+      data: {
+        labels: series.points.map(function (p) { return p.period; }),
+        datasets: [
+          {
+            label: series.parameter + ' monthly average',
+            data: series.points.map(function (p) { return p.value; }),
+            borderColor: '#2563eb',
+            tension: 0.2,
+          },
+          series.threshold !== null ? {
+            label: 'Limit',
+            data: series.points.map(function () { return series.threshold; }),
+            borderColor: '#d94141',
+            borderDash: [6, 4],
+            pointRadius: 0,
+          } : null,
+        ].filter(Boolean),
+      },
+      options: { responsive: false, plugins: { legend: { display: true } } },
+    });
+  });
+})();
+</script>
+{% endblock %}

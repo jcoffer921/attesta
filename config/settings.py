@@ -30,6 +30,11 @@ ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=[])
 
 GEMINI_API_KEY = env('GEMINI_API_KEY', default='')
 
+# Stage 1 Racket rule engine (see dsl/README.md for the CLI contract).
+DSL_ROOT = BASE_DIR / 'dsl'
+RACKET_EXECUTABLE = env('RACKET_EXECUTABLE', default='racket')
+RACKET_TIMEOUT_SECONDS = env.int('RACKET_TIMEOUT_SECONDS', default=30)
+
 
 # Application definition
 

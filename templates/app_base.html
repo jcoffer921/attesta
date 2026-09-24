@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% load static %}
+{% block body %}
+{% include "partials/icons.html" %}
+<div class="app-shell" data-shell>
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-head">{% include "partials/brand.html" %}<button class="icon-button collapse-button" data-sidebar-toggle aria-label="Collapse sidebar"><svg><use href="#i-chevron"/></svg></button></div>
+    <nav class="nav-list" aria-label="Primary navigation">
+      {% if executive_shell %}
+      <p class="nav-label">Attesta internal</p>
+      <a class="nav-item active" href="{% url 'executive' %}"><svg><use href="#i-dashboard"/></svg><span>Executive Overview</span></a>
+      <a class="nav-item" href="#"><svg><use href="#i-chart"/></svg><span>Dashboard</span></a><a class="nav-item" href="#"><svg><use href="#i-list"/></svg><span>Programs</span></a><a class="nav-item" href="#"><svg><use href="#i-file"/></svg><span>Frameworks</span></a><a class="nav-item" href="#"><svg><use href="#i-users"/></svg><span>Customers</span></a><a class="nav-item" href="#"><svg><use href="#i-chart"/></svg><span>Reports</span></a><a class="nav-item" href="#"><svg><use href="#i-spark"/></svg><span>AI Insights</span></a><a class="nav-item" href="#"><svg><use href="#i-alert"/></svg><span>Alerts</span></a><a class="nav-item" href="{% url 'audit_trail' %}"><svg><use href="#i-clock"/></svg><span>Audit Trail</span></a><a class="nav-item" href="#"><svg><use href="#i-settings"/></svg><span>Settings</span></a>
+      {% else %}
+      <p class="nav-label">Workspace</p>
+      <a class="nav-item {% if active == 'dashboard' %}active{% endif %}" href="{% url 'dashboard' %}"><svg><use href="#i-dashboard"/></svg><span>Dashboard</span></a>
+      <a class="nav-item {% if active == 'requirements' %}active{% endif %}" href="{% url 'requirements' %}"><svg><use href="#i-list"/></svg><span>Requirements</span></a>
+      <a class="nav-item {% if active == 'evidence' %}active{% endif %}" href="{% url 'evidence' %}"><svg><use href="#i-file"/></svg><span>Evidence</span></a>
+      <a class="nav-item {% if active == 'ai_review' %}active{% endif %}" href="{% url 'ai_review' %}"><svg><use href="#i-spark"/></svg><span>AI Review</span></a>
+      <a class="nav-item {% if active == 'reports' %}active{% endif %}" href="{% url 'reports' %}"><svg><use href="#i-chart"/></svg><span>Reports</span></a>
+      <a class="nav-item {% if active == 'audit' %}active{% endif %}" href="{% url 'audit_trail' %}"><svg><use href="#i-clock"/></svg><span>Audit Trail</span></a>
+      <a class="nav-item {% if active == 'settings' %}active{% endif %}" href="{% url 'settings' %}"><svg><use href="#i-settings"/></svg><span>Settings</span></a>
+      {% endif %}
+    </nav>
+    <div class="support-card"><span class="support-icon">?</span><strong>Need help?</strong><p>Contact our support team</p><button class="button button-secondary button-small" data-toast="Support request started">Contact Support</button></div>
+  </aside>
+  <div class="app-main">
+    <header class="topbar"><button class="icon-button mobile-menu" data-sidebar-toggle aria-label="Open navigation"><svg><use href="#i-list"/></svg></button><button class="org-picker"><span class="org-logo">A</span><span>{% if executive_shell %}All Organizations{% else %}Acme Corporation{% endif %}</span><span>⌄</span></button><label class="global-search"><svg><use href="#i-search"/></svg><input type="search" placeholder="Search requirements, evidence, frameworks..." aria-label="Global search"><kbd>Ctrl K</kbd></label><div class="top-actions"><button class="icon-button bell" aria-label="Notifications" data-toast="You have 3 new notifications"><svg><use href="#i-bell"/></svg><i>3</i></button><button class="profile-button" data-dropdown-toggle><span class="avatar">JS</span><span class="profile-copy"><strong>Jane Smith</strong><small>{% if executive_shell %}Chief Executive Officer{% else %}Compliance Manager{% endif %}</small></span><span>⌄</span></button><div class="dropdown" data-dropdown><a href="{% url 'settings' %}">Profile settings</a><a href="{% url 'login' %}">Sign out</a></div></div></header>
+    <main class="content">{% block app_content %}{% endblock %}</main>
+  </div>
+</div>
+<div class="drawer-backdrop" data-drawer-close></div>
+<div class="toast" role="status" aria-live="polite" data-toast-box><svg><use href="#i-check"/></svg><span>Action completed</span></div>
+{% endblock %}
