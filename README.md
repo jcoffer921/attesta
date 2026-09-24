@@ -76,6 +76,27 @@ Relevant settings (`config/settings.py`, overridable via `.env`):
 | `DSL_ROOT` | `BASE_DIR / "dsl"` | Root the service layer resolves permit/pipeline slugs under |
 | `GEMINI_API_KEY` | `""` | Required for `apps.ai_assist.services.explain_result` |
 
+## Running in production
+
+```
+uv run gunicorn config.wsgi:application -c gunicorn.conf.py
+```
+
+`gunicorn.conf.py` uses `gthread` workers with several threads each, and
+sets Gunicorn's own `timeout` to `RACKET_TIMEOUT_SECONDS + 15` by default.
+Both matter because `run_validation` shells out to Racket and blocks the
+calling thread for up to `RACKET_TIMEOUT_SECONDS`: a single sync worker
+would block every other request for that long, and a Gunicorn timeout
+shorter than the engine's own would SIGKILL the worker before
+`apps.validation.services` gets to return its structured `{"error": {...}}`
+response. See the comments in `gunicorn.conf.py` for the full reasoning and
+the `GUNICORN_WORKERS`/`GUNICORN_THREADS`/`GUNICORN_TIMEOUT` env overrides.
+
+The Gemini explanation step (`apps.ai_assist.services.explain_result`) is
+always a separate call from `run_validation`, made only after a run has
+already committed — a slow or failing explanation can't delay or corrupt a
+stored validation result.
+
 ## Running the tests
 
 ```
