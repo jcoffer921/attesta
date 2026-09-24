@@ -9,9 +9,9 @@ from django.urls import reverse
         ('dashboard', 'Compliance Workspace'),
         ('requirements', 'Manage, track, and fulfill'),
         ('evidence', 'Upload, manage, and organize'),
-        ('ai_review', 'Human review is required'),
+        ('ai_review', 'No document selected'),
         ('reports', 'Recent Generated Reports'),
-        ('audit_trail', 'Audit Integrity'),
+        ('audit_trail', 'No audit events recorded yet'),
         ('settings', 'AI Preferences'),
         ('executive', 'Monthly Recurring Revenue'),
     ],
@@ -33,5 +33,5 @@ def test_shared_shell_and_interaction_assets(client):
     html = response.content.decode()
     assert 'data-shell' in html
     assert 'data-sidebar-toggle' in html
-    assert 'data-detail="requirement-drawer"' in html
+    assert 'data-table-search' in html
     assert 'js/app.js' in html

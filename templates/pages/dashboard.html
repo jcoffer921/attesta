@@ -1,31 +1,24 @@
 {% extends "app_base.html" %}{% block app_content %}
-<div class="page-header"><div><p class="eyebrow">Acme Corporation</p><h1>Compliance Workspace</h1><p>AI-powered compliance monitoring and management</p></div><button class="button button-primary" data-modal-open="report-modal"><svg><use href="#i-chart"/></svg>Generate Report</button></div>
+<div class="page-header"><div><p class="eyebrow">Your organization</p><h1>Compliance Workspace</h1><p>AI-powered compliance monitoring and management</p></div><button class="button button-primary" data-modal-open="report-modal"><svg><use href="#i-chart"/></svg>Generate Report</button></div>
 <section class="metric-grid four">
-  <article class="card metric-card score-card"><div><span class="metric-icon blue"><svg><use href="#i-chart"/></svg></span><p>Compliance Readiness Score</p><div class="metric-value">82 <small>/ 100</small></div><span class="badge success">● Good</span></div><div class="donut" style="--value:82"><span>82%</span></div></article>
-  <article class="card metric-card"><span class="metric-icon green"><svg><use href="#i-check"/></svg></span><p>Complete</p><div class="metric-value">128</div><small>requirements <b class="trend up">↑ 8%</b></small></article>
-  <article class="card metric-card"><span class="metric-icon red"><svg><use href="#i-alert"/></svg></span><p>Missing</p><div class="metric-value">32</div><small>requirements <b class="trend down">↓ 3%</b></small></article>
-  <article class="card metric-card"><span class="metric-icon amber"><svg><use href="#i-clock"/></svg></span><p>At Risk</p><div class="metric-value">28</div><small>requirements <b class="trend up warn">↑ 4</b></small></article>
+  <article class="card metric-card score-card"><div><span class="metric-icon blue"><svg><use href="#i-chart"/></svg></span><p>Compliance Readiness Score</p><div class="metric-value">— <small>/ 100</small></div><span class="badge neutral">No data yet</span></div><div class="donut" style="--value:0"><span>—</span></div></article>
+  <article class="card metric-card"><span class="metric-icon green"><svg><use href="#i-check"/></svg></span><p>Complete</p><div class="metric-value">0</div><small>requirements</small></article>
+  <article class="card metric-card"><span class="metric-icon red"><svg><use href="#i-alert"/></svg></span><p>Missing</p><div class="metric-value">0</div><small>requirements</small></article>
+  <article class="card metric-card"><span class="metric-icon amber"><svg><use href="#i-clock"/></svg></span><p>At Risk</p><div class="metric-value">0</div><small>requirements</small></article>
 </section>
 <div class="dashboard-grid">
   <section class="card span-2"><div class="card-header"><div><h2>Requirements Progress</h2><p>Progress across active compliance frameworks</p></div><button class="text-button">View all →</button></div><div class="progress-list">
-    <div class="progress-row"><span class="framework-icon blue">S2</span><div><div class="progress-meta"><b>SOC 2 Type II</b><span>84% · 64 of 76</span></div><div class="progress"><i style="width:84%"></i></div></div></div>
-    <div class="progress-row"><span class="framework-icon purple">ISO</span><div><div class="progress-meta"><b>ISO 27001:2022</b><span>76% · 71 of 93</span></div><div class="progress purple"><i style="width:76%"></i></div></div></div>
-    <div class="progress-row"><span class="framework-icon cyan">GD</span><div><div class="progress-meta"><b>GDPR</b><span>91% · 42 of 46</span></div><div class="progress cyan"><i style="width:91%"></i></div></div></div>
-    <div class="progress-row"><span class="framework-icon navy">HI</span><div><div class="progress-meta"><b>HIPAA</b><span>68% · 53 of 78</span></div><div class="progress navy"><i style="width:68%"></i></div></div></div>
+    <p class="muted">No frameworks configured yet.</p>
   </div></section>
   <section class="card"><div class="card-header"><div><h2>Upcoming Deadlines</h2><p>Next 30 days</p></div><button class="icon-button">•••</button></div><div class="deadline-list">
-    <div class="deadline"><time><b>12</b>OCT</time><div><b>SOC 2 Type II</b><span>Evidence Submission</span></div><span class="badge danger">5 days</span></div>
-    <div class="deadline"><time><b>18</b>OCT</time><div><b>ISO 27001:2022</b><span>Internal Audit</span></div><span class="badge warning">11 days</span></div>
-    <div class="deadline"><time><b>24</b>OCT</time><div><b>GDPR</b><span>DPIA Review</span></div><span class="badge info">17 days</span></div>
-    <div class="deadline"><time><b>30</b>OCT</time><div><b>Policy Review</b><span>Annual Attestation</span></div><span class="badge neutral">23 days</span></div>
+    <p class="muted">No upcoming deadlines.</p>
   </div></section>
   <section class="card span-2"><div class="card-header"><div><h2>Recent Evidence Activity</h2><p>Latest uploads and review activity</p></div><a href="{% url 'evidence' %}" class="text-button">View evidence →</a></div><div class="activity-list">
-    <div class="activity"><span class="file-icon pdf">PDF</span><div><b>Access Control Policy.pdf</b><span>Uploaded by Michael Lee · 2 hours ago</span></div><span class="badge success">Reviewed</span></div>
-    <div class="activity"><span class="file-icon pdf">PDF</span><div><b>Employee Training Records Q1.pdf</b><span>Uploaded by Sarah Johnson · 5 hours ago</span></div><span class="badge warning">In review</span></div>
-    <div class="activity"><span class="file-icon doc">DOC</span><div><b>Incident Response Plan.docx</b><span>Version 3 uploaded · Yesterday</span></div><span class="badge info">Updated</span></div>
-    <div class="activity"><span class="file-icon ai"><svg><use href="#i-spark"/></svg></span><div><b>AI Review Completed</b><span>Vendor Risk Assessment.xlsx · Yesterday</span></div><span class="badge ai">82% match</span></div>
+    <p class="muted">No evidence has been uploaded yet.</p>
   </div></section>
-  <section class="card"><div class="card-header"><div><h2>Needs Attention</h2><p>Prioritize these items</p></div></div><div class="attention-list"><a href="{% url 'requirements' %}"><span class="attention-icon danger"><svg><use href="#i-alert"/></svg></span><div><b>9 High Risk Requirements</b><span>Immediate action recommended</span></div><svg><use href="#i-chevron"/></svg></a><a href="{% url 'evidence' %}"><span class="attention-icon warning"><svg><use href="#i-clock"/></svg></span><div><b>7 Evidence Items Expiring Soon</b><span>Within the next 30 days</span></div><svg><use href="#i-chevron"/></svg></a><a href="{% url 'requirements' %}"><span class="attention-icon danger"><svg><use href="#i-list"/></svg></span><div><b>3 Requirements Overdue</b><span>Owners have been notified</span></div><svg><use href="#i-chevron"/></svg></a></div></section>
+  <section class="card"><div class="card-header"><div><h2>Needs Attention</h2><p>Prioritize these items</p></div></div><div class="attention-list">
+    <p class="muted">Nothing needs attention right now.</p>
+  </div></section>
 </div>
 <div class="modal" id="report-modal" role="dialog" aria-modal="true" aria-labelledby="quick-report-title"><div class="modal-card"><button class="modal-close" data-modal-close aria-label="Close">×</button><span class="metric-icon blue"><svg><use href="#i-chart"/></svg></span><h2 id="quick-report-title">Generate compliance report</h2><p>Choose a starting point. You can customize sections before export.</p><label>Report type<select><option>Executive Summary</option><option>Framework Gap Analysis</option><option>Audit Package</option></select></label><div class="modal-actions"><button class="button button-secondary" data-modal-close>Cancel</button><a class="button button-primary" href="{% url 'reports' %}">Continue to builder</a></div></div></div>
 {% endblock %}
