@@ -52,6 +52,9 @@ class LimitResult(models.Model):
     # Populated only by apps.ai_assist.services.explain_result, after the run
     # is already committed. Gemini interprets; it never writes a status.
     gemini_explanation = models.TextField(null=True, blank=True)
+    # Ids the explanation cited (prov:/rej:/cite:) and the citation-map
+    # version they were verified against. Written with gemini_explanation.
+    explanation_refs = models.JSONField(null=True, blank=True)
 
     def __str__(self):
         return f"LimitResult({self.parameter}, {self.clause}, {self.status})"
