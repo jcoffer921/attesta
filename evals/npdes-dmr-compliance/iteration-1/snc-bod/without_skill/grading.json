@@ -1,0 +1,35 @@
+{
+  "expectations": [
+    {
+      "text": "Classifies BOD as a Group I pollutant with a technical review criterion of 1.4x the limit (40% over)",
+      "passed": true,
+      "evidence": "BOD Group I, 40% TRC"
+    },
+    {
+      "text": "Concludes 25% over does not meet the TRC",
+      "passed": true,
+      "evidence": "25% below TRC"
+    },
+    {
+      "text": "Explains the chronic criterion needs exceedance in 4 or more of 6 months and that 3 months does not meet it",
+      "passed": true,
+      "evidence": "Chronic 4 of 6; only 3"
+    },
+    {
+      "text": "Concludes the data does not meet the effluent SNC criteria",
+      "passed": true,
+      "evidence": "Not SNC"
+    },
+    {
+      "text": "Caveats that reporting violations (e.g. late/missing DMRs) can independently cause SNC and that EPA/the state assigns SNC status",
+      "passed": true,
+      "evidence": "Late DMRs and regulator determination covered"
+    }
+  ],
+  "summary": {
+    "passed": 5,
+    "failed": 0,
+    "total": 5,
+    "pass_rate": 1.0
+  }
+}

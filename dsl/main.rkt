@@ -77,8 +77,8 @@
   (define permit (load-permit (hash-ref flags 'permit (lambda () (raise (cli-error "bad-args" "missing --permit"))))))
   (define pipeline (load-pipeline (hash-ref flags 'pipeline (lambda () (raise (cli-error "bad-args" "missing --pipeline"))))))
   (define input (read-stdin-json))
-  (unless (and (hash? input) (equal? (hash-ref input 'schema_version #f) 1))
-    (raise (cli-error "invalid-json" "expected an object with schema_version: 1")))
+  (unless (and (hash? input) (equal? (hash-ref input 'schema_version #f) 3))
+    (raise (cli-error "invalid-json" "expected an object with schema_version: 3")))
   (define raw-records (hash-ref input 'records '()))
   (unless (list? raw-records)
     (raise (cli-error "invalid-json" "\"records\" must be an array")))
@@ -93,14 +93,14 @@
     (with-handlers ([exn:fail? (lambda (e) (raise (cli-error "eval-error" (format "evaluation failed: ~a" (exn-message e)))))])
       (evaluate-permit permit samples period)))
   (write-json
-   (hasheq 'schema_version 1
+   (hasheq 'schema_version 3
            'provenance (map provenance-entry->jsexpr provenance)
            'results (map trace->jsexpr results)
            'rejections (map rejection-entry->jsexpr rejections))))
 
 (define (cmd-describe flags)
   (define permit (load-permit (hash-ref flags 'permit (lambda () (raise (cli-error "bad-args" "missing --permit"))))))
-  (write-json (hasheq 'schema_version 1 'permit (permit->jsexpr permit))))
+  (write-json (hasheq 'schema_version 3 'permit (permit->jsexpr permit))))
 
 (module+ main
   (define argv (current-command-line-arguments))

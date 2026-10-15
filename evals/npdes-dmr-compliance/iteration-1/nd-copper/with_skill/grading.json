@@ -1,0 +1,30 @@
+{
+  "expectations": [
+    {
+      "text": "States it is not simply a violation (and not a clean pass): compliance cannot be demonstrated or refuted from the result",
+      "passed": true,
+      "evidence": "Says \"not a confirmed violation, and not a pass\"; unresolved"
+    },
+    {
+      "text": "Says the value is reported as <5 (the quantitation/reporting limit), not as 0, ND, or No Discharge",
+      "passed": true,
+      "evidence": "Report as <5 ug/L; not 0, ND or No Discharge"
+    },
+    {
+      "text": "Notes the reporting limit (5) is above the permit limit (3), i.e. the method is not sensitive enough, and recommends review/consulting the permit or DEP",
+      "passed": true,
+      "evidence": "QL 5 > limit 3; asks lab for lower QL, check permit Part C, consult DEP"
+    },
+    {
+      "text": "Does not claim a specific penalty or enforcement outcome",
+      "passed": true,
+      "evidence": "No penalty claim"
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 0,
+    "total": 4,
+    "pass_rate": 1.0
+  }
+}

@@ -1,0 +1,1325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Eval Review</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600&family=Lora:wght@400;500&display=swap" rel="stylesheet">
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js" integrity="sha384-EnyY0/GSHQGSxSgMwaIPzSESbqoOLSexfnSMN2AP+39Ckmn92stwABZynq1JyzdT" crossorigin="anonymous"></script>
+  <style>
+    :root {
+      --bg: #faf9f5;
+      --surface: #ffffff;
+      --border: #e8e6dc;
+      --text: #141413;
+      --text-muted: #b0aea5;
+      --accent: #d97757;
+      --accent-hover: #c4613f;
+      --green: #788c5d;
+      --green-bg: #eef2e8;
+      --red: #c44;
+      --red-bg: #fceaea;
+      --header-bg: #141413;
+      --header-text: #faf9f5;
+      --radius: 6px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Lora', Georgia, serif;
+      background: var(--bg);
+      color: var(--text);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ---- Header ---- */
+    .header {
+      background: var(--header-bg);
+      color: var(--header-text);
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-shrink: 0;
+    }
+    .header h1 {
+      font-family: 'Poppins', sans-serif;
+      font-size: 1.25rem;
+      font-weight: 600;
+    }
+    .header .instructions {
+      font-size: 0.8rem;
+      opacity: 0.7;
+      margin-top: 0.25rem;
+    }
+    .header .progress {
+      font-size: 0.875rem;
+      opacity: 0.8;
+      text-align: right;
+    }
+
+    /* ---- Main content ---- */
+    .main {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1.5rem 2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+
+    /* ---- Sections ---- */
+    .section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      flex-shrink: 0;
+    }
+    .section-header {
+      font-family: 'Poppins', sans-serif;
+      padding: 0.75rem 1rem;
+      font-size: 0.75rem;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      border-bottom: 1px solid var(--border);
+      background: var(--bg);
+    }
+    .section-body {
+      padding: 1rem;
+    }
+
+    /* ---- Config badge ---- */
+    .config-badge {
+      display: inline-block;
+      padding: 0.2rem 0.625rem;
+      border-radius: 9999px;
+      font-family: 'Poppins', sans-serif;
+      font-size: 0.6875rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      margin-left: 0.75rem;
+      vertical-align: middle;
+    }
+    .config-badge.config-primary {
+      background: rgba(33, 150, 243, 0.12);
+      color: #1976d2;
+    }
+    .config-badge.config-baseline {
+      background: rgba(255, 193, 7, 0.15);
+      color: #f57f17;
+    }
+
+    /* ---- Prompt ---- */
+    .prompt-text {
+      white-space: pre-wrap;
+      font-size: 0.9375rem;
+      line-height: 1.6;
+    }
+
+    /* ---- Outputs ---- */
+    .output-file {
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .output-file + .output-file {
+      margin-top: 1rem;
+    }
+    .output-file-header {
+      padding: 0.5rem 0.75rem;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+      font-family: 'SF Mono', SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .output-file-header .dl-btn {
+      font-size: 0.7rem;
+      color: var(--accent);
+      text-decoration: none;
+      cursor: pointer;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-weight: 500;
+      opacity: 0.8;
+    }
+    .output-file-header .dl-btn:hover {
+      opacity: 1;
+      text-decoration: underline;
+    }
+    .output-file-content {
+      padding: 0.75rem;
+      overflow-x: auto;
+    }
+    .output-file-content pre {
+      font-size: 0.8125rem;
+      line-height: 1.5;
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-family: 'SF Mono', SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace;
+    }
+    .output-file-content img {
+      max-width: 100%;
+      height: auto;
+      border-radius: 4px;
+    }
+    .output-file-content iframe {
+      width: 100%;
+      height: 600px;
+      border: none;
+    }
+    .output-file-content table {
+      border-collapse: collapse;
+      font-size: 0.8125rem;
+      width: 100%;
+    }
+    .output-file-content table td,
+    .output-file-content table th {
+      border: 1px solid var(--border);
+      padding: 0.375rem 0.5rem;
+      text-align: left;
+    }
+    .output-file-content table th {
+      background: var(--bg);
+      font-weight: 600;
+    }
+    .output-file-content .download-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      color: var(--accent);
+      text-decoration: none;
+      font-size: 0.875rem;
+      cursor: pointer;
+    }
+    .output-file-content .download-link:hover {
+      background: var(--border);
+    }
+    .empty-state {
+      color: var(--text-muted);
+      font-style: italic;
+      padding: 2rem;
+      text-align: center;
+    }
+
+    /* ---- Feedback ---- */
+    .prev-feedback {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 0.625rem 0.75rem;
+      margin-top: 0.75rem;
+      font-size: 0.8125rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+    .prev-feedback-label {
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-bottom: 0.25rem;
+      color: var(--text-muted);
+    }
+    .feedback-textarea {
+      width: 100%;
+      min-height: 100px;
+      padding: 0.75rem;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      font-family: inherit;
+      font-size: 0.9375rem;
+      line-height: 1.5;
+      resize: vertical;
+      color: var(--text);
+    }
+    .feedback-textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    }
+    .feedback-status {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-top: 0.5rem;
+      min-height: 1.1em;
+    }
+
+    /* ---- Grades (collapsible) ---- */
+    .grades-toggle {
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+      user-select: none;
+    }
+    .grades-toggle:hover {
+      color: var(--accent);
+    }
+    .grades-toggle .arrow {
+      margin-right: 0.5rem;
+      transition: transform 0.15s;
+      font-size: 0.75rem;
+    }
+    .grades-toggle .arrow.open {
+      transform: rotate(90deg);
+    }
+    .grades-content {
+      display: none;
+      margin-top: 0.75rem;
+    }
+    .grades-content.open {
+      display: block;
+    }
+    .grades-summary {
+      font-size: 0.875rem;
+      margin-bottom: 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .grade-badge {
+      display: inline-block;
+      padding: 0.125rem 0.5rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+    .grade-pass { background: var(--green-bg); color: var(--green); }
+    .grade-fail { background: var(--red-bg); color: var(--red); }
+    .assertion-list {
+      list-style: none;
+    }
+    .assertion-item {
+      padding: 0.625rem 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.8125rem;
+    }
+    .assertion-item:last-child { border-bottom: none; }
+    .assertion-status {
+      font-weight: 600;
+      margin-right: 0.5rem;
+    }
+    .assertion-status.pass { color: var(--green); }
+    .assertion-status.fail { color: var(--red); }
+    .assertion-evidence {
+      color: var(--text-muted);
+      font-size: 0.75rem;
+      margin-top: 0.25rem;
+      padding-left: 1.5rem;
+    }
+
+    /* ---- View tabs ---- */
+    .view-tabs {
+      display: flex;
+      gap: 0;
+      padding: 0 2rem;
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .view-tab {
+      font-family: 'Poppins', sans-serif;
+      padding: 0.625rem 1.25rem;
+      font-size: 0.8125rem;
+      font-weight: 500;
+      cursor: pointer;
+      border: none;
+      background: none;
+      color: var(--text-muted);
+      border-bottom: 2px solid transparent;
+      transition: all 0.15s;
+    }
+    .view-tab:hover { color: var(--text); }
+    .view-tab.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+    }
+    .view-panel { display: none; }
+    .view-panel.active { display: flex; flex-direction: column; flex: 1; overflow: hidden; }
+
+    /* ---- Benchmark view ---- */
+    .benchmark-view {
+      padding: 1.5rem 2rem;
+      overflow-y: auto;
+      flex: 1;
+    }
+    .benchmark-table {
+      border-collapse: collapse;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 0.8125rem;
+      width: 100%;
+      margin-bottom: 1.5rem;
+    }
+    .benchmark-table th, .benchmark-table td {
+      padding: 0.625rem 0.75rem;
+      text-align: left;
+      border: 1px solid var(--border);
+    }
+    .benchmark-table th {
+      font-family: 'Poppins', sans-serif;
+      background: var(--header-bg);
+      color: var(--header-text);
+      font-weight: 500;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .benchmark-table tr:hover { background: var(--bg); }
+    .benchmark-table tr.benchmark-row-with { background: rgba(33, 150, 243, 0.06); }
+    .benchmark-table tr.benchmark-row-without { background: rgba(255, 193, 7, 0.06); }
+    .benchmark-table tr.benchmark-row-with:hover { background: rgba(33, 150, 243, 0.12); }
+    .benchmark-table tr.benchmark-row-without:hover { background: rgba(255, 193, 7, 0.12); }
+    .benchmark-table tr.benchmark-row-avg { font-weight: 600; border-top: 2px solid var(--border); }
+    .benchmark-table tr.benchmark-row-avg.benchmark-row-with { background: rgba(33, 150, 243, 0.12); }
+    .benchmark-table tr.benchmark-row-avg.benchmark-row-without { background: rgba(255, 193, 7, 0.12); }
+    .benchmark-delta-positive { color: var(--green); font-weight: 600; }
+    .benchmark-delta-negative { color: var(--red); font-weight: 600; }
+    .benchmark-notes {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1rem;
+    }
+    .benchmark-notes h3 {
+      font-family: 'Poppins', sans-serif;
+      font-size: 0.875rem;
+      margin-bottom: 0.75rem;
+    }
+    .benchmark-notes ul {
+      list-style: disc;
+      padding-left: 1.25rem;
+    }
+    .benchmark-notes li {
+      font-size: 0.8125rem;
+      line-height: 1.6;
+      margin-bottom: 0.375rem;
+    }
+    .benchmark-empty {
+      color: var(--text-muted);
+      font-style: italic;
+      text-align: center;
+      padding: 3rem;
+    }
+
+    /* ---- Navigation ---- */
+    .nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem 2rem;
+      border-top: 1px solid var(--border);
+      background: var(--surface);
+      flex-shrink: 0;
+    }
+    .nav-btn {
+      font-family: 'Poppins', sans-serif;
+      padding: 0.5rem 1.25rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      cursor: pointer;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--text);
+      transition: all 0.15s;
+    }
+    .nav-btn:hover:not(:disabled) {
+      background: var(--bg);
+      border-color: var(--text-muted);
+    }
+    .nav-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+    .done-btn {
+      font-family: 'Poppins', sans-serif;
+      padding: 0.5rem 1.5rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      color: var(--text);
+      cursor: pointer;
+      font-size: 0.875rem;
+      font-weight: 500;
+      transition: all 0.15s;
+    }
+    .done-btn:hover {
+      background: var(--bg);
+      border-color: var(--text-muted);
+    }
+    .done-btn.ready {
+      border: none;
+      background: var(--accent);
+      color: white;
+      font-weight: 600;
+    }
+    .done-btn.ready:hover {
+      background: var(--accent-hover);
+    }
+    /* ---- Done overlay ---- */
+    .done-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 100;
+      justify-content: center;
+      align-items: center;
+    }
+    .done-overlay.visible {
+      display: flex;
+    }
+    .done-card {
+      background: var(--surface);
+      border-radius: 12px;
+      padding: 2rem 3rem;
+      text-align: center;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      max-width: 500px;
+    }
+    .done-card h2 {
+      font-size: 1.5rem;
+      margin-bottom: 0.5rem;
+    }
+    .done-card p {
+      color: var(--text-muted);
+      margin-bottom: 1.5rem;
+      line-height: 1.5;
+    }
+    .done-card .btn-row {
+      display: flex;
+      gap: 0.5rem;
+      justify-content: center;
+    }
+    .done-card button {
+      padding: 0.5rem 1.25rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      cursor: pointer;
+      font-size: 0.875rem;
+    }
+    .done-card button:hover {
+      background: var(--bg);
+    }
+    /* ---- Toast ---- */
+    .toast {
+      position: fixed;
+      bottom: 5rem;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--header-bg);
+      color: var(--header-text);
+      padding: 0.625rem 1.25rem;
+      border-radius: var(--radius);
+      font-size: 0.875rem;
+      opacity: 0;
+      transition: opacity 0.3s;
+      pointer-events: none;
+      z-index: 200;
+    }
+    .toast.visible {
+      opacity: 1;
+    }
+  </style>
+</head>
+<body>
+  <div id="app" style="height:100vh; display:flex; flex-direction:column;">
+    <div class="header">
+      <div>
+        <h1>Eval Review: <span id="skill-name"></span></h1>
+        <div class="instructions">Review each output and leave feedback below. Navigate with arrow keys or buttons. When done, copy feedback and paste into Claude Code.</div>
+      </div>
+      <div class="progress" id="progress"></div>
+    </div>
+
+    <!-- View tabs (only shown when benchmark data exists) -->
+    <div class="view-tabs" id="view-tabs" style="display:none;">
+      <button class="view-tab active" onclick="switchView('outputs')">Outputs</button>
+      <button class="view-tab" onclick="switchView('benchmark')">Benchmark</button>
+    </div>
+
+    <!-- Outputs panel (qualitative review) -->
+    <div class="view-panel active" id="panel-outputs">
+    <div class="main">
+      <!-- Prompt -->
+      <div class="section">
+        <div class="section-header">Prompt <span class="config-badge" id="config-badge" style="display:none;"></span></div>
+        <div class="section-body">
+          <div class="prompt-text" id="prompt-text"></div>
+        </div>
+      </div>
+
+      <!-- Outputs -->
+      <div class="section">
+        <div class="section-header">Output</div>
+        <div class="section-body" id="outputs-body">
+          <div class="empty-state">No output files found</div>
+        </div>
+      </div>
+
+      <!-- Previous Output (collapsible) -->
+      <div class="section" id="prev-outputs-section" style="display:none;">
+        <div class="section-header">
+          <div class="grades-toggle" onclick="togglePrevOutputs()">
+            <span class="arrow" id="prev-outputs-arrow">&#9654;</span>
+            Previous Output
+          </div>
+        </div>
+        <div class="grades-content" id="prev-outputs-content"></div>
+      </div>
+
+      <!-- Grades (collapsible) -->
+      <div class="section" id="grades-section" style="display:none;">
+        <div class="section-header">
+          <div class="grades-toggle" onclick="toggleGrades()">
+            <span class="arrow" id="grades-arrow">&#9654;</span>
+            Formal Grades
+          </div>
+        </div>
+        <div class="grades-content" id="grades-content"></div>
+      </div>
+
+      <!-- Feedback -->
+      <div class="section">
+        <div class="section-header">Your Feedback</div>
+        <div class="section-body">
+          <textarea
+            class="feedback-textarea"
+            id="feedback"
+            placeholder="What do you think of this output? Any issues, suggestions, or things that look great?"
+          ></textarea>
+          <div class="feedback-status" id="feedback-status"></div>
+          <div class="prev-feedback" id="prev-feedback" style="display:none;">
+            <div class="prev-feedback-label">Previous feedback</div>
+            <div id="prev-feedback-text"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="nav" id="outputs-nav">
+      <button class="nav-btn" id="prev-btn" onclick="navigate(-1)">&#8592; Previous</button>
+      <button class="done-btn" id="done-btn" onclick="showDoneDialog()">Submit All Reviews</button>
+      <button class="nav-btn" id="next-btn" onclick="navigate(1)">Next &#8594;</button>
+    </div>
+    </div><!-- end panel-outputs -->
+
+    <!-- Benchmark panel (quantitative stats) -->
+    <div class="view-panel" id="panel-benchmark">
+      <div class="benchmark-view" id="benchmark-content">
+        <div class="benchmark-empty">No benchmark data available. Run a benchmark to see quantitative results here.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Done overlay -->
+  <div class="done-overlay" id="done-overlay">
+    <div class="done-card">
+      <h2>Review Complete</h2>
+      <p>Your feedback has been saved. Go back to your Claude Code session and tell Claude you're done reviewing.</p>
+      <div class="btn-row">
+        <button onclick="closeDoneDialog()">OK</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <script>
+    // ---- Embedded data (injected by generate_review.py) ----
+    const EMBEDDED_DATA = {"skill_name": "npdes-dmr-compliance", "runs": [{"id": "nd-copper-with_skill", "prompt": "(No prompt found)", "eval_id": 1, "outputs": [{"name": "answer.md", "type": "text", "content": "**Short answer: we can't call it a violation yet, and we can't call it compliant either. It needs a decision before the DMR goes in.**\n\n**Why:** The lab's `<5 ug/L` means copper was below their quantitation limit (QL) of 5. Our daily max is 3. Because the QL (5) is higher than the limit (3), the result cannot show whether we met the limit. It is not an exceedance, because we have no detected value above 3. It is not a pass, because the actual concentration could be anywhere from 0 to 5.\n\n**How to put it on the DMR (PA):**\n- Report the result as `<5` (the `<` sign with the QL). Do not enter 0 or \"ND\", and do not use a No Discharge code.\n- If every October result was non-detect, the monthly statistic is also reported as `<5`. If some were detected, the average gets a `<` too, using the QL for each non-detect.\n- Zero may replace the QL only if the permit's limit is below the most sensitive detection limit and the parameter is listed in 25 Pa. Code Ch. 16 App. A Tables 2A/2B. Check our permit's Part C for this.\n\n**What to do now:**\n1. Check the permit (Part C and the copper requirements) for the required QL or method. If the permit requires a QL at or below 3 ug/L, the lab's 5 is a lab or method problem. Ask the lab whether it can rerun with a lower QL, or whether the sample can be re-analyzed within hold time.\n2. If a lower QL can't be achieved, add a comment on the DMR explaining the non-detect and the QL. Do not mark it as an excursion yourself.\n3. Escalate to DEP on how they want it handled if the permit is silent. The call on whether `<5` against a limit of 3 is treated as a violation is DEP's and the permit's, not ours.\n\n**Caveats:** This is based on PA DEP DMR guidance, which is partly dated, and the permit text is the authority. I haven't seen your permit, so confirm the QL requirement and the non-detect clause there.\n\n**Reply to your plant manager (suggested):**\n\"Copper at 001 came back below the lab's 5 ug/L reporting limit, and our daily max is 3. That's inconclusive, not a confirmed violation. We'll report it as `<5` per DEP convention. I'm checking the permit's required detection level and asking the lab about a lower reporting limit before we submit.\"\n"}], "grading": {"expectations": [{"text": "States it is not simply a violation (and not a clean pass): compliance cannot be demonstrated or refuted from the result", "passed": true, "evidence": "Not a confirmed violation and not a pass; QL 5 > limit 3, inconclusive"}, {"text": "Says the value is reported as <5 (the quantitation/reporting limit), not as 0, ND, or No Discharge", "passed": true, "evidence": "Report <5; not 0, ND or NODI C"}, {"text": "Notes the reporting limit (5) is above the permit limit (3), i.e. the method is not sensitive enough, and recommends review/consulting the permit or DEP", "passed": true, "evidence": "QL above limit; check permit Part C, lower QL, ask DEP"}, {"text": "Does not claim a specific penalty or enforcement outcome", "passed": true, "evidence": "No penalty claim"}, {"text": "Does not conclude the result is compliant without first checking the permit's required method/quantitation limit", "passed": true, "evidence": "Tells user to check the permit Part C required QL before concluding"}], "summary": {"passed": 5, "failed": 0, "total": 5, "pass_rate": 1.0}}}, {"id": "nd-copper-without_skill", "prompt": "(No prompt found)", "eval_id": 1, "outputs": [{"name": "answer.md", "type": "text", "content": "**Short answer: not a violation as reported, but the result is not usable as-is, and you may need a rerun.**\n\n**Why:** \"<5 ug/L\" means copper was not detected at a quantitation/reporting level of 5 ug/L. That is above your 3 ug/L daily max, so the result cannot show whether you met the limit. A non-detect at a level higher than the permit limit is inconclusive, not an exceedance (and not proof of compliance).\n\n**What to do:**\n1. Ask the lab about the method and its QL/MDL. PA DEP expects analytical methods sensitive enough to measure at or below the permit limit (or the Quantitation Limit listed in the permit, often in Part A/Part C). Check the permit for a stated QL for copper. If the lab can reach 3 ug/L or lower (e.g., EPA 200.8 ICP-MS), have the sample re-analyzed if it is still within holding time, or use a lower-QL method on the next sample.\n2. If the permit lists a QL and the lab met it, the \"<QL\" result is reported as such and counts as in compliance.\n\n**On the DMR (eDMR):**\n- Enter the value as \"<5\" (use the less-than qualifier and the actual detection/reporting level, 5 ug/L) in the Daily Max field. Do not enter 0, 2.5, or 5 as a number.\n- Do not use a NODI code for this; NODI codes are for no discharge, no sample taken, etc. Use the \"<\" qualifier and report the lab's level.\n- For the monthly average, follow the permit and PA DEP DMR instructions for non-detects (generally treat as zero if all values are non-detect, and report \"<\" at the QL). Only a detected value goes into averages as measured.\n- Add a comment on the DMR noting the QL was above the permit limit, the method used, and that no exceedance is indicated.\n\n**Bottom line for your plant manager:** No confirmed violation, but a 5 ug/L reporting level cannot demonstrate compliance with a 3 ug/L limit. Fix the lab method or QL going forward (and rerun the October sample if possible) so it does not become an inadequate-monitoring issue with DEP. Confirm details against your permit's QL language and DEP's DMR instructions.\n"}], "grading": {"expectations": [{"text": "States it is not simply a violation (and not a clean pass): compliance cannot be demonstrated or refuted from the result", "passed": true, "evidence": "Not a confirmed violation; inconclusive"}, {"text": "Says the value is reported as <5 (the quantitation/reporting limit), not as 0, ND, or No Discharge", "passed": true, "evidence": "Report <5 with qualifier, not 0 or a number"}, {"text": "Notes the reporting limit (5) is above the permit limit (3), i.e. the method is not sensitive enough, and recommends review/consulting the permit or DEP", "passed": true, "evidence": "QL above limit; ask lab for lower-QL method, check permit"}, {"text": "Does not claim a specific penalty or enforcement outcome", "passed": true, "evidence": "No penalty claim"}, {"text": "Does not conclude the result is compliant without first checking the permit's required method/quantitation limit", "passed": true, "evidence": "Conditions \"counts as in compliance\" on the permit listing a QL the lab met. Also says non-detects are \"generally treated as zero\" in averages, which conflicts with PA (use the reporting limit)"}], "summary": {"passed": 5, "failed": 0, "total": 5, "pass_rate": 1.0}}}, {"id": "nodi-missed-sample-with_skill", "prompt": "(No prompt found)", "eval_id": 2, "outputs": [{"name": "answer.md", "type": "text", "content": "# Missed TSS sample at Outfall 002 (PA eDMR)\n\n## Short answer\n\n- Report the one TSS result you do have (value, or `<QL` if non-detect). Do not leave the row blank and do not enter 0 or \"No Discharge\".\n- The missing second sample is a missed sample / failed analysis. In PA eDMR that is NODI code `E`, and per PA DEP guidance **E is itself a violation**, not an excuse. It needs a comment and a Non-Compliance Reporting Form 3800-FM-BCW0440.\n- Yes, treat it as a violation (a sampling-frequency / monitoring violation), even though no limit was exceeded.\n\n## What to enter\n\n1. **Reported value.** One sample was collected, so report it as the TSS value for the period.\n   - Monthly average: with a single result the average is that result. If it is a non-detect, report `<QL`, not `0` or \"ND\".\n   - Daily maximum: that same value.\n   - Do not invent or estimate a second sample.\n2. **The missing sample.** Because a numeric value and a NODI code cannot both be on the same row, how E is applied depends on how your eDMR structures the row (the average/max rows carry the one real value). Check how the eDMR handles \"samples taken vs required\" and the sample-count field for outfall 002. Use `E` only where no value can be reported for a required row.\n   - Do not use `FF`, which is for no data not covered by E or GG, with extenuating circumstances. An autosampler failure is an equipment failure and DEP guidance puts missed samples and analytical failures under E.\n   - Do not use `GG`; that is for conditional sampling where the condition was not met.\n   - Do not use \"No Discharge\"; there was a discharge, you just did not sample it twice.\n3. **Comment field.** State the facts plainly: the autosampler failure, the dates (first half of September), that one sample was collected on [date], what was done to restore sampling, and corrective action.\n4. **Form 3800-FM-BCW0440.** File the Non-Compliance Reporting Form with the DMR.\n\n## Is it a violation?\n\n- **Yes, as a monitoring/reporting violation.** Under PA guidance E is a violation. In general NPDES terms, taking fewer samples than the permit requires is a sample-frequency violation regardless of whether the one result met the limit.\n- **It is not an effluent exceedance.** A single result under the limit is still a pass against the limit. The problem is the missed monitoring, not the discharge quality. Keep these separate in your explanation to DEP.\n- **Notification.** A missed sample is not one of the 24-hour/5-day oral/written notice triggers (those are for endangerment, bypass, upset, or max daily limit violations), but all noncompliance must be reported with the DMR, which is what the comment and 0440 form do.\n- **SNC.** Significant noncompliance is assigned by DEP/EPA, not by you. Reporting violations can count toward SNC, so a one-off is low risk but a pattern is not.\n\n## Caveats and things to confirm\n\n- The permit is the authority. Check Part C of the permit for the TSS sample frequency, sample type, and any provision on equipment failure or alternate sampling (for example, a grab sample substitute for a failed composite).\n- PA DEP guidance cited is dated in places and one older mining FAQ says otherwise on E; follow the current eDMR page and your permit.\n- I have not verified the exact PA eDMR mechanics for entering E alongside a reported value, nor PA's precise late/reporting-violation thresholds. Confirm with your DEP regional office or the eDMR help if the form will not accept the entry.\n- Attesta does not currently model sample-frequency violations, so its `pass` on this row would not capture this issue. Do not rely on a \"pass\" status here.\n- A human with signatory authority should approve and certify the final entry.\n"}], "grading": {"expectations": [{"text": "Identifies PA NODI code E (missed sample / analysis not conducted) for the missing sample", "passed": true, "evidence": "PA NODI code E"}, {"text": "States that using E results in a reporting violation", "passed": true, "evidence": "E is itself a violation; sample-frequency violation"}, {"text": "Mentions an explanatory comment and/or the Non-Compliance Reporting Form (3800-FM-BCW0440)", "passed": true, "evidence": "Comment plus Form 3800-FM-BCW0440"}, {"text": "Says not to use No Discharge (C) because the facility did discharge", "passed": true, "evidence": "Not No Discharge"}, {"text": "Still reports the one sample that was taken", "passed": true, "evidence": "Reports the collected sample"}], "summary": {"passed": 5, "failed": 0, "total": 5, "pass_rate": 1.0}}}, {"id": "nodi-missed-sample-without_skill", "prompt": "(No prompt found)", "eval_id": 2, "outputs": [{"name": "answer.md", "type": "text", "content": "# Missed TSS sample at Outfall 002 (September, PA eDMR)\n\n## Short answer\n\n- **Do not enter a NODI code for the missing sample as if the whole parameter was not monitored.** You did collect one sample, so you have data. Report the one result you have.\n- **Yes, collecting only one of two required samples is a monitoring/sampling frequency violation.** An autosampler failure is generally not a defense. It is reported, and you explain it in the comments.\n\n## What to enter on the eDMR\n\n1. **Report the one valid TSS result** you have in the appropriate fields (e.g., the Daily Maximum and/or Average Monthly value based on that single sample). A single sample is the average of the month by default, so the monthly average equals that one value, and the daily max is that value too.\n2. **Number of Excursions / Sample Frequency fields:** In the \"No. of Analyses\" or \"Samples Taken\" field (PA eDMR has a sample count field in some parameter rows), enter 1, not 2. In the \"Sample Frequency\" item, the permit frequency stays 2/month.\n3. **NODI code:** A NODI code (e.g., 9 = Conditional Monitoring Not Required, B = Below Detection Limit, C = No Discharge, 4 = Frozen, 6 = Weather, 8 = Not Required...) is for when no value is reported for a limit. It does not fit well here because you have a value. NODI Code **\"9\"** or similar should not be used to hide the missed sample. If there had been zero samples because of equipment failure, the typical option is to leave the value blank, and use the NODI \"Q\" (Not Sampled/Sample Not Collected) or whichever listed code applies in PA's eDMR code list (\"Q\" is used in many states for \"Not Sampled\"). Confirm the code list in PA DEP's eDMR user guide.\n4. **Comments/Attachment:** Explain in the comment field: autosampler failure dates, that only 1 of 2 required samples was collected, corrective actions (repair/replacement, use of grab samples as backup), and the date it was fixed.\n\n## Is it a violation?\n\n- Yes. A permit that requires 2 samples/month sets a minimum monitoring frequency. Taking 1 sample is a failure to meet the monitoring requirement, which is a permit violation (a reporting/monitoring violation), separate from an effluent limit exceedance.\n- It is not an effluent limit exceedance, since the TSS result you have can be compared to the limits normally. It is usually treated as a less severe violation, but it is enforceable under the Clean Water Act and PA Clean Streams Law, and DEP can cite it.\n- Equipment failure is not an excuse by itself. The \"upset\" and \"bypass\" provisions don't generally cover a monitoring equipment malfunction. Permit Part A (Standard Conditions) requires proper operation and maintenance, and you should have backup (grab samples) when an autosampler is down. Where a composite is required, a grab sample may not substitute unless the permit allows it.\n\n## What to do\n\n- Report the single result, annotate the shortfall, and do not make up or estimate a second value.\n- Contact the DEP regional office clerk/permit manager and, if useful, request a determination; some regions may accept a notice.\n- Fix the sampler, document maintenance, and consider a spare unit or a grab-sample contingency in the SOP.\n- Note that I am answering from general knowledge; verify the exact NODI code list and field names against the current PA DEP eDMR guidance and your permit's Part A/Part C.\n"}], "grading": {"expectations": [{"text": "Identifies PA NODI code E (missed sample / analysis not conducted) for the missing sample", "passed": false, "evidence": "Suggests Q for zero-sample case; never identifies E"}, {"text": "States that using E results in a reporting violation", "passed": false, "evidence": "Calls it a monitoring-frequency violation but not tied to code E"}, {"text": "Mentions an explanatory comment and/or the Non-Compliance Reporting Form (3800-FM-BCW0440)", "passed": true, "evidence": "Explanatory comment about autosampler failure (form not named)"}, {"text": "Says not to use No Discharge (C) because the facility did discharge", "passed": true, "evidence": "Says no NODI code should cover a sample that was collected; No Discharge not applicable"}, {"text": "Still reports the one sample that was taken", "passed": true, "evidence": "Reports the one valid sample"}], "summary": {"passed": 3, "failed": 2, "total": 5, "pass_rate": 0.6}}}, {"id": "snc-copper-late-with_skill", "prompt": "(No prompt found)", "eval_id": 3, "outputs": [{"name": "answer.md", "type": "text", "content": "# Does either issue put us in significant noncompliance (SNC)?\n\n**Short answer:** Both can. The copper exceedances likely meet the Technical Review Criteria (TRC) for SNC, but not the Chronic criterion. The 45-day-late July DMR is a reporting violation that also counts toward SNC. SNC is assigned by EPA (ICIS-NPDES) or the state, not by you, so treat the following as an indicative assessment, not an official determination.\n\n## 1. Copper monthly average exceeded by ~25% in 2 of 6 months\n\nCriteria for monthly-average limits (40 CFR 123.45 App. A, Category I):\n\n| Criterion | Test | Your facts | Met? |\n|---|---|---|---|\n| Chronic | Limit exceeded by any amount in 4 or more months of a 6-month period | 2 months | No |\n| Technical Review Criteria (TRC) | Monthly average at or above 1.4x the limit (Group I) or 1.2x (Group II), in 2 or more months of a 6-month period | ~1.25x in 2 months | Likely yes, if copper is Group II |\n\n- Copper is a metal. Most metals fall in Group II (the 1.2x threshold). Group I is oxygen demand, solids, nutrients, oil and grease, minerals and some metals. At 1.25x you exceed 1.2x but not 1.4x, so the group matters. If copper were Group I, you would not meet TRC. Confirm copper's group against the App. A list; the skill notes the full Group I/II lists are not completely verified.\n- \"About 25%\" is too loose. The threshold is a ratio of 1.2 or more of the limit, so check the actual values. Roughly 1.25x leaves a small margin, and rounding or the exact averages could matter.\n- The 2 months must fall within the same 6-month period, and the limit must be a monthly average (as you describe).\n- Non-detects in the averaging can change the computed average. Verify how the permit directs non-detects to be handled before relying on the 1.25x figure.\n\nConclusion: no Chronic SNC (2 of 6 months, not 4). Probable TRC SNC.\n\n## 2. July DMR filed 45 days late\n\n- Reporting violations, such as DMRs 30 or more days late, count toward SNC. Nationally they account for over half of facilities in SNC.\n- 45 days exceeds the 30-day threshold, so this would be a reporting-based SNC trigger. The 30-day figure itself is general domain knowledge (not fully verified against a primary source), so confirm it with the state or EPA, or against the permit and program guidance.\n- The late filing is separate from the copper exceedances and is a violation on its own, independent of the effluent numbers.\n\n## What this means in practice\n\n- You could be flagged for SNC on two independent grounds: effluent (TRC, if copper is Group II) and reporting (late DMR).\n- Report all noncompliance with the DMR (122.41(l)(7)). Separately, check whether any exceedance triggered the 24-hour oral and 5-day written notice requirements (those apply to violations of listed maximum daily limits, bypasses, upsets and health/environment endangerment). Monthly-average exceedances alone are generally reported with the DMR.\n- Keep records of samples, calibration and reports for at least 3 years.\n- Check the actual permit and the state program (for example, Pennsylvania DEP) for any stricter or different requirements. The permit is the authority.\n\n## Caveats\n\n- SNC is determined by EPA or the state, not self-declared.\n- Attesta can only preview these criteria as informational flags (such as \"would meet TRC\"), clearly labeled indicative. It does not model late-DMR violations yet.\n"}], "grading": {"expectations": [{"text": "Classifies copper as a Group II pollutant (toxic metal) with a technical review criterion of 1.2x the limit (20% over)", "passed": true, "evidence": "Copper is a metal, Group II (1.2x); notes group should be confirmed"}, {"text": "Concludes 25% over in 2 of 6 months MEETS the TRC, so the effluent criterion for SNC is met", "passed": true, "evidence": "1.25x in 2 of 6 months meets TRC (\"probable TRC SNC\", conditional on Group II)"}, {"text": "Notes the chronic criterion (4 of 6 months) is not met by two months", "passed": true, "evidence": "Chronic needs 4 of 6; 2 does not meet"}, {"text": "Says the DMR filed 45 days late is a reporting violation that can independently count toward SNC (30+ days late)", "passed": true, "evidence": "45-day-late DMR is a reporting violation counting toward SNC (flags 30-day as [G])"}, {"text": "States that SNC status is assigned by EPA/the state and the permittee's own reading is indicative", "passed": true, "evidence": "SNC assigned by EPA/state; assessment indicative"}], "summary": {"passed": 5, "failed": 0, "total": 5, "pass_rate": 1.0}}}, {"id": "snc-copper-late-without_skill", "prompt": "(No prompt found)", "eval_id": 3, "outputs": [{"name": "answer.md", "type": "text", "content": "# Significant noncompliance (SNC): copper exceedances and a late July DMR\n\nShort answer: yes, both facts likely put you in SNC, under two different criteria. These are the federal SNC criteria for NPDES permittees in 40 CFR 123.45, Appendix A (the basis for EPA's national SNC tracking). Your state (e.g., PA DEP) may apply them with its own wording. I am answering from memory of the regulation, so verify against the current text and your permit.\n\n## 1. Copper monthly average about 25% over the limit in 2 of 6 months\n\nCriterion: Technical Review Criteria (TRC) violation. It applies to effluent limit violations.\n\n- Copper is a metal and is a Group II pollutant (toxics/metals) under Appendix A. Group II uses a TRC factor of 1.2, meaning a measurement that is 20% or more above the limit is a TRC exceedance. (Group I, e.g. BOD, TSS, oil and grease, ammonia, uses 1.4, or 40%.)\n- A reading about 25% over (ratio about 1.25) exceeds the 1.2 factor, so each of those two monthly averages is a TRC exceedance.\n- SNC is triggered when 33% or more of all measurements for that pollutant in a six-month period are TRC exceedances. Two of six monthly averages is 33.3%, which meets the threshold.\n\nCaveats:\n- The percentage counts all measurements for that pollutant/limit in the six-month window. If you also have a daily maximum, or multiple outfalls, evaluated separately, the denominator changes. Evaluate each limit on its own. For the monthly-average limit alone, 2 of 6 qualifies.\n- The \"about 25%\" must actually be at least 20% over (reported ratio >= 1.2). If either month was really 18% over, it would not count as a TRC exceedance and you would fall below 33%.\n- The two months must fall in the same consecutive six-month window (they do, if both are in the last six months).\n\nChronic criterion (does not apply): any pollutant, any magnitude over the limit, in 4 or more of 6 consecutive months. You have 2 of 6, so this is not met. Still, a third and fourth exceedance in the window would trigger it even at small magnitudes.\n\nAlso note: SNC status aside, each exceedance is a violation in its own right, and you should check whether the permit requires 24-hour or 5-day notification (copper exceedances typically do not unless they are a bypass, upset, or endanger health; check Part II/Part A of the permit).\n\n## 2. July DMR filed 45 days late\n\nCriterion: Reporting violation. Appendix A treats failure to provide a required report (DMR, or a compliance schedule/progress report) 30 days or more after the due date as SNC.\n\n- 45 days is more than 30, so the late DMR is itself an SNC-level reporting violation.\n- Filing it late stops the missing-report condition, but it does not erase the violation. The violation is recorded for the period it was late.\n\n## Net result\n\n| Issue | Criterion | SNC? |\n|---|---|---|\n| Copper 2 of 6 months, about 25% over | TRC, Group II (1.2x), 33% of measurements in 6 months | Yes (2/6 = 33%), subject to caveats |\n| Copper, chronic (4 of 6 months) | Chronic | No (2 of 6) |\n| July DMR 45 days late | Reporting, 30+ days overdue | Yes |\n\n## What to do\n\n- Confirm exact ratios (reported value / limit) for the two months and the full measurement count for the window.\n- Expect the regulator to see SNC on the next quarterly noncompliance report and to consider enforcement. SNC is a tracking category, not itself a penalty, but it raises enforcement priority.\n- Document the cause and corrective action for copper, and why the DMR was late. Corrective action and timely reporting going forward are what move you off SNC in later review periods.\n- Consider proactive contact with the regulator.\n"}], "grading": {"expectations": [{"text": "Classifies copper as a Group II pollutant (toxic metal) with a technical review criterion of 1.2x the limit (20% over)", "passed": true, "evidence": "Metal, Group II, TRC 1.2 (20% over)"}, {"text": "Concludes 25% over in 2 of 6 months MEETS the TRC, so the effluent criterion for SNC is met", "passed": true, "evidence": "Concludes TRC met, but via an invented \"33% of measurements\" test rather than 2+ months in 6"}, {"text": "Notes the chronic criterion (4 of 6 months) is not met by two months", "passed": true, "evidence": "Chronic 4 of 6 not met"}, {"text": "Says the DMR filed 45 days late is a reporting violation that can independently count toward SNC (30+ days late)", "passed": true, "evidence": "DMR 30+ days late counts; 45 qualifies"}, {"text": "States that SNC status is assigned by EPA/the state and the permittee's own reading is indicative", "passed": false, "evidence": "Does not say SNC is assigned by EPA/state or that the permittee reading is indicative; only \"verify against current text\""}], "summary": {"passed": 4, "failed": 1, "total": 5, "pass_rate": 0.8}}}], "previous_feedback": {}, "previous_outputs": {"nd-copper-with_skill": [{"name": "answer.md", "type": "text", "content": "**Short answer: not a confirmed violation, and not a pass. It is unresolved until the lab's detection limit is addressed.**\n\n- A result of `<5 ug/L` means copper was below the lab's quantitation limit (QL) of 5. Your daily max is 3. Because the QL (5) is above the limit (3), the result can neither show compliance nor prove an exceedance. Treat it as \"needs review\", not \"violation\" and not \"pass\".\n- Do not report it as 0, \"ND\", or \"No Discharge\".\n\n**How to put it on the DMR (PA DEP convention):**\n- Report the daily maximum as `<5` ug/L (the `<` symbol with the QL). If every result for October was non-detect, report `<QL` as the value. If you had several samples, the `<` goes on the statistic if any sample was non-detect.\n- Do not use a NODI code (such as B or GG) when you have a result; a row takes a value or a code, not both.\n- Add a comment that the QL (5 ug/L) exceeds the permit limit (3 ug/L).\n\n**Possible exception:** zero may be substituted for the non-detect only if the permit itself sets a limit below the most sensitive detection limit and copper is listed in 25 Pa. Code Ch. 16 App. A Tables 2A/2B. Check Part C of your permit.\n\n**Before you submit:**\n1. Ask the lab whether a lower QL is available. A method sensitive enough to measure 3 ug/L or less (and, ideally, the permit's required method) resolves this. Check the permit for a required analytical method and QL.\n2. Confirm in the permit how non-detects are to be handled, since the permit is the authority.\n3. If the lab cannot get below 3 ug/L, document this and ask DEP how they want it handled before certifying the DMR.\n\n**For your plant manager:** The October copper result is \"<5\" against a limit of 3. The lab's reporting limit is too high to prove compliance, so we are asking for a lower detection limit and will report it as \"<5\" with a comment. This is not an established exceedance, but it needs to be resolved before the DMR is certified.\n\nCaveat: this is based on the general PA DEP guidance; your permit's Part C and DEP's current eDMR instructions control.\n"}], "nd-copper-without_skill": [{"name": "answer.md", "type": "text", "content": "**Short answer: not a violation on its face, but you can't call it compliant yet. The lab's detection level is too high for your limit.**\n\n**Why**\n- \"<5 ug/L\" means copper was not detected at a quantification level (QL) of 5 ug/L. That does not show the discharge exceeded 3 ug/L.\n- It also does not prove it was under 3. The lab's QL (5) is above your daily max (3), so the result can't demonstrate compliance.\n- Check your permit for a specified QL or required method for copper. DEP permits usually include one. If the permit QL is, for example, 5 or higher, a \"<5\" result is treated as compliant. If the permit QL is below 5, this lab result is not acceptable data.\n\n**On the DMR**\n- Do not enter 0, 3, or 5. Enter the result as \"<5\" (less-than qualifier with the lab's QL) in the daily max field in eDMR.\n- Add a comment explaining that the result is below the lab QL and that the QL is above the permit limit.\n- Do not check the box for an exceedance based on this result alone.\n- The October DMR is due by the 28th of November.\n\n**What to do now**\n1. Ask the lab which method they used and their reporting limit. Total recoverable copper by ICP-MS (EPA 200.8) routinely gets down to about 0.5 ug/L, which is well below 3.\n2. Switch to a method with a QL at or below the permit limit for all future samples.\n3. If the October sample is still within holding time, have it re-analyzed with the lower-QL method. If not, note that on the DMR.\n4. If DEP questions the result, you have the documentation showing a good-faith effort.\n\n*This is general guidance. Confirm the QL and reporting language in your actual permit (Part A/C) or with your DEP regional office.*\n\n**Reply to plant manager (one line):** \"Copper came back non-detect at <5 ug/L, but the lab's detection level is above our 3 ug/L limit, so it's not a confirmed violation and not confirmed compliance. We'll report it as '<5' with a comment and have the lab use a lower-detection method going forward.\"\n"}], "nodi-missed-sample-with_skill": [{"name": "answer.md", "type": "text", "content": "**Short answer:** Report the one TSS sample you actually have as a real value, and use NODI code `E` only for the sample you could not collect. Yes, treat the missed sample as a violation. PA DEP guidance treats `E` as a violation, not an excuse.\n\n**What to enter on the eDMR**\n\n1. **Do not leave the field blank**, and do not use \"No Discharge\". \"No Discharge\" is only for a period with no discharge at all. You did discharge and simply didn't sample.\n2. **Enter the result you have.** The one valid TSS sample goes in as a numeric value. A row takes a value or a NODI code, never both. If it is non-detect, report it as `<QL`, not `0` or \"ND\".\n3. **Use `E` (missed sample / analytical failure) for the missing sample.** This applies to the sample you didn't collect because the autosampler failed.\n   - Add a comment explaining the autosampler failure and the dates.\n   - File the Non-Compliance Reporting Form 3800-FM-BCW0440.\n4. **Watch how the statistic is handled.** If the permit's TSS limit is a monthly average, the average is computed from the samples you actually have. Never drop or invent samples to change an average. Check how the eDMR wants the average, max and sample count shown when only one sample exists. The permit's Part C and DEP's current eDMR page control.\n5. `FF` (no data, extenuating circumstances) is a possible alternative if the permit and DEP allow it. Do not pick it just to avoid `E`, because the guidance puts \"missed sample / analytical failure\" under `E`. If you think a different code applies, confirm with your DEP regional office before submitting.\n\n**Does it count as a violation?**\n\nYes, in the sense that matters here. Under PA DEP guidance, `E` is a violation. Taking one sample when the permit requires two is a sampling-frequency (monitoring/reporting) violation, not an effluent-limit exceedance. Nothing here suggests TSS exceeded its limit, so there is no exceedance from this event alone.\n\nPoints worth knowing:\n- **Being a violation is not the same as SNC.** Significant noncompliance is assigned by EPA/DEP, not by you. Reporting violations can count toward SNC, but a single missed sample is not the typical trigger.\n- **Reporting it honestly is the right path.** Report all noncompliance with the DMR. The `E` code, the comment and the 3800-FM-BCW0440 form are how you do that. Reporting it does not erase the violation, but concealing it is worse.\n- **A broken autosampler is generally not a 24-hour/5-day notification event** on its own, unless it also involved something that endangers health or the environment. Check your permit's Part A/B conditions to confirm.\n- **Keep records:** the equipment failure log, repair records and calibration, retained at least 3 years.\n\n**Caveats**\n- The PA guidance I'm relying on is partly dated (DMR instructions 12/2016), and I haven't verified the exact late-DMR or reporting-violation thresholds in 25 Pa. Code Ch. 92a. Your permit and DEP's current eDMR guidance win.\n- I don't have your permit, so I can't confirm whether outfall 002 TSS is a monthly average, whether the 2 samples/month frequency has any permit-specific relief, or the exact limit. A grab-vs-composite requirement may matter too, since your autosampler was presumably taking composites.\n- Going forward, ask DEP whether any alternate or backup sampling method (for example manual composite or grab sampling) is acceptable if the autosampler fails again, so you avoid another missed sample.\n"}], "nodi-missed-sample-without_skill": [{"name": "answer.md", "type": "text", "content": "Short answer: report the one sample you have, use a NODI code only if there is no value at all for a parameter/period, and yes, a missed required sample is a monitoring/reporting violation even though the one result may be under the limit.\n\n## What to enter on the eDMR\n\n- Enter the one valid TSS result you collected. Do not put a NODI code on the whole TSS line and do not leave the value blank.\n- With one sample, the monthly average equals that single result, and the daily maximum is the same value. Report them from the sample you have. Do not average in a zero or estimate a value for the missed sample.\n- Under the \"Number of Excursions\"/\"No. of Samples\" style fields (PA eDMR asks for sample frequency fields on some parameters), enter the actual number of samples taken (1) if your report has such a field, versus the required 2.\n- NODI codes apply when no data exist for a reportable value (for example, no discharge, or the whole parameter not sampled). NODI codes commonly used: C (no discharge), 9 (conditional monitoring not required this period), B (below detection limit, only for results below the QL, and generally not applicable here), and others such as 7 or similar for \"not required.\" None of them describes \"sample missed because the equipment failed\", so do not use a NODI code to cover the missed second sample. Confirm the exact code list in the PA DEP eDMR instructions.\n- Use the comments/attachment field on the eDMR to explain: the autosampler failed in the first half of September, the date it failed, what you did (repair or replace date), and that only one sample was collected instead of two.\n\n## Is it a violation?\n\nYes, probably. Collecting fewer samples than the permit's minimum frequency is a violation of the monitoring requirements in the permit, regardless of the result. Under 40 CFR 122.41(j) and (l) and the PA permit's Part A monitoring conditions, you must monitor at the frequency specified. It is usually a monitoring/reporting violation, not an effluent limit exceedance. That distinction matters:\n\n- If the single result is below the TSS monthly average and daily max limits, there is no effluent exceedance.\n- The missed sample is still a monitoring frequency violation that DEP can cite, and it will show up in compliance tracking. It is generally a lower-severity violation than an exceedance, but repeated missed samples can raise enforcement concern.\n\n## What to do\n\n1. Take a grab sample as soon as possible if the permit allows grab samples as a substitute. Check whether your permit allows a grab sample when the autosampler is out of service. Some permits do, and if collected in the same month, it may not fix the month already ended.\n2. Report the missed sample accurately on the DMR and explain in the comments. Do not report a made-up value.\n3. Notify the DEP regional office (clean water program) in writing about the equipment failure and missed sampling, and ask how they want it handled. Some permits require noncompliance reporting under the \"Reporting noncompliance\" conditions (Part A) within 5 days for other noncompliance, and 24 hours for certain events. A missed sample is generally reported on the DMR, and DEP may want the written explanation.\n4. Document the repair and put a backup plan in place (spare sampler, rental unit, or an approved grab-sample procedure).\n\n## Caveats\n\nI cannot see your permit, so check the exact monitoring frequency language (for example \"2/month\" versus \"1/week\"), whether it allows alternate sampling, and the current eDMR code list in the PA DEP eDMR user guide. Treat this as general guidance and confirm with your DEP regional compliance specialist, since they decide how the missed sample is handled.\n"}], "snc-bod-with_skill": [{"name": "answer.md", "type": "text", "content": "# Is the facility in significant noncompliance for BOD?\n\n**Short answer: on the numbers you gave, no. The BOD monthly-average pattern does not meet either effluent SNC criterion. But the facility is still in violation in those three months, and it is close to the chronic threshold.**\n\nOne caveat first: SNC is assigned by EPA (via ICIS-NPDES) or the state, not by the permittee. What follows is an indicative screen against the criteria, not an official determination.\n\n## The criteria (40 CFR 123.45 App. A, monthly-average effluent limits)\n\n**1. Chronic criterion: limit exceeded, by any amount, in 4 or more months of a 6-month period.**\n- Your facility exceeded in 3 of 6 months.\n- 3 < 4, so this is **not met**. One more exceedance month inside the same 6-month window would meet it.\n\n**2. Technical Review Criteria (TRC): monthly average at or above 1.4x the limit (Group I) or 1.2x (Group II), in 2 or more months of a 6-month period.**\n- BOD is an oxygen-demand parameter, so it is **Group I**. The threshold is 1.4x the limit.\n- A 25% exceedance is 1.25x, which is below 1.4x, so those months do not count toward TRC for BOD.\n- The 1.2x Group II threshold does not apply to BOD. 1.25x would have cleared it, but BOD is Group I.\n- TRC is **not met**. The key number to check is whether any month actually hit 1.4x (for example, a month \"about 25%\" over that is really 40% over).\n\n## What this does and does not mean\n\n- **Not SNC is not the same as compliant.** Three months over the monthly-average limit are still permit violations and exceedances. They must be reported on the DMR, and the facility should expect enforcement attention and need a corrective-action plan.\n- **The facility is one month from chronic SNC.** In a rolling 6-month window, a fourth exceedance of any size would trigger it. Treat the next month as high risk.\n- **Check the 6-month window.** The test is any 6-month period, evaluated on a rolling basis. If your three exceedance months fall inside a window that also includes other exceedances (for example a month where you were \"fine\" on average but had a daily-maximum problem), re-check.\n- **Other things can also make a facility SNC**, which I cannot rule out from what you told me:\n  - Reporting violations, such as DMRs 30 or more days late or missing. Nationally these account for over half of facilities in SNC.\n  - Exceedances of other parameters or other limit types (TRSS and chronic counts are tracked per parameter and limit).\n  - Other categories such as compliance schedule violations or unauthorized bypasses.\n- **Daily-maximum violations** may trigger the 24-hour oral and 5-day written notification requirement (40 CFR 122.41(l)(6)), independent of SNC.\n\n## What to verify against the permit and DMRs\n\n- The exact statistical base. Is the limit a monthly average, and does the permit define the average differently (for example, a geometric mean)?\n- All samples are included in the average. All monitoring done with approved methods must be included, even if more frequent than required. Dropping samples to improve an average is not allowed.\n- Units match the permit. A unit mismatch is a data error, not a pass or fail.\n- Whether the \"25%\" is the exact ratio per month. A month at 1.40x or higher changes the answer (TRC needs two such months in the window).\n- Mass-loading limits (lbs/day) and percent-removal requirements for BOD, if the permit has them. These are separate limits with their own tests.\n\n## Bottom line\n\n| Test | Threshold | Facility | Met? |\n|---|---|---|---|\n| Chronic | exceed in 4+ of 6 months | 3 of 6 | No |\n| TRC (Group I, BOD) | 1.4x limit in 2+ of 6 months | about 1.25x | No |\n\nNot in SNC for BOD on these facts, but in violation in 3 months and one exceedance away from chronic SNC.\n"}], "snc-bod-without_skill": [{"name": "answer.md", "type": "text", "content": "**Short answer: No, based on what you've described, this is not significant noncompliance (SNC). But it is a real violation pattern, and it is one more exceedance away from chronic SNC.**\n\n## Criteria (EPA SNC definition, 40 CFR 123.45 Appendix A, as applied by EPA and states such as PA DEP)\n\nEffluent limit SNC is judged per pollutant, per outfall, over a rolling 6-month window, using two tests.\n\n**1. Technical Review Criteria (TRC) - magnitude**\n- Group I pollutants (oxygen-demanding substances such as BOD/CBOD, COD, TOC, TSS, oil and grease, nutrients): an exceedance counts toward the TRC if the measured value is 1.4x (40% over) the limit or more.\n- Group II pollutants (most metals and toxics): 1.2x (20% over) or more.\n- SNC is triggered when 66% or more of the measurements in the 6-month period exceed the TRC multiple.\n\nYour case: BOD is Group I, so the multiple is 40%. A 25% exceedance is below 1.4x, so none of these months count as TRC exceedances. The 66% test is not met either, since only 50% of months exceeded at all.\n\n**2. Chronic criterion - frequency**\n- SNC is triggered when the same pollutant exceeds its limit (any magnitude) in 4 or more months out of 6.\n\nYour case: 3 of 6 months. Not met. It would be met if a fourth month in the window exceeds.\n\n## Other SNC categories to check\nThe above covers only effluent limits. SNC can also arise from:\n- Failure to submit a DMR more than 30 days late.\n- Missing a compliance schedule milestone by 90+ days, or failing to submit a progress report 30+ days late.\n- Any single violation (bypass, upset, spill, etc.) that the regulator determines caused or threatened health or the environment, or any violation of an enforcement order.\n\n## Caveats and practical notes\n- Check all limit types. If BOD also has a weekly-average or daily-maximum limit and those were exceeded, count them. Evaluate individual measurements against TRC, not only the monthly averages.\n- Be sure the 25% is relative to the limit (value / limit = 1.25), and that the same units/basis (concentration vs. mass loading) is used.\n- Check other parameters (TSS, ammonia, etc.) separately; each is evaluated on its own.\n- The window is rolling, so re-check each month. The three exceedances sit within the window only until they age out.\n- Each exceedance is still a permit violation. It must be reported on the DMR, and any required notifications, corrective action, and possible enforcement (e.g., a consent order or penalties) can apply even without SNC. Non-SNC violations are still tracked as \"Category 1/2\" noncompliance in EPA's reporting.\n- SNC is formally a regulator/EPA determination (reported in the QNCR), so confirm with your state agency, as states may apply stricter local criteria.\n\nBottom line: 3 exceedances of 25% on a Group I pollutant fail both SNC tests (not 40%+ magnitude, not 4 of 6 months), so no SNC, but you are one more exceedance from chronic SNC and should act now.\n"}]}, "benchmark": {"metadata": {"skill_name": "npdes-dmr-compliance", "skill_path": ".claude/skills/npdes-dmr-compliance", "executor_model": "claude-sonnet-5-5", "analyzer_model": "claude-sonnet-5-5", "timestamp": "2026-10-15T00:00:00Z", "evals_run": [1, 2, 3], "runs_per_configuration": 1}, "runs": [{"eval_id": 1, "eval_name": "nd-copper", "configuration": "with_skill", "run_number": 1, "result": {"pass_rate": 1.0, "passed": 5, "failed": 0, "total": 5, "time_seconds": 20.7, "tokens": 50519, "tool_calls": 0, "errors": 0}, "expectations": [{"text": "States it is not simply a violation (and not a clean pass): compliance cannot be demonstrated or refuted from the result", "passed": true, "evidence": "Not a confirmed violation and not a pass; QL 5 > limit 3, inconclusive"}, {"text": "Says the value is reported as <5 (the quantitation/reporting limit), not as 0, ND, or No Discharge", "passed": true, "evidence": "Report <5; not 0, ND or NODI C"}, {"text": "Notes the reporting limit (5) is above the permit limit (3), i.e. the method is not sensitive enough, and recommends review/consulting the permit or DEP", "passed": true, "evidence": "QL above limit; check permit Part C, lower QL, ask DEP"}, {"text": "Does not claim a specific penalty or enforcement outcome", "passed": true, "evidence": "No penalty claim"}, {"text": "Does not conclude the result is compliant without first checking the permit's required method/quantitation limit", "passed": true, "evidence": "Tells user to check the permit Part C required QL before concluding"}], "notes": []}, {"eval_id": 1, "eval_name": "nd-copper", "configuration": "without_skill", "run_number": 1, "result": {"pass_rate": 1.0, "passed": 5, "failed": 0, "total": 5, "time_seconds": 12.8, "tokens": 39961, "tool_calls": 0, "errors": 0}, "expectations": [{"text": "States it is not simply a violation (and not a clean pass): compliance cannot be demonstrated or refuted from the result", "passed": true, "evidence": "Not a confirmed violation; inconclusive"}, {"text": "Says the value is reported as <5 (the quantitation/reporting limit), not as 0, ND, or No Discharge", "passed": true, "evidence": "Report <5 with qualifier, not 0 or a number"}, {"text": "Notes the reporting limit (5) is above the permit limit (3), i.e. the method is not sensitive enough, and recommends review/consulting the permit or DEP", "passed": true, "evidence": "QL above limit; ask lab for lower-QL method, check permit"}, {"text": "Does not claim a specific penalty or enforcement outcome", "passed": true, "evidence": "No penalty claim"}, {"text": "Does not conclude the result is compliant without first checking the permit's required method/quantitation limit", "passed": true, "evidence": "Conditions \"counts as in compliance\" on the permit listing a QL the lab met. Also says non-detects are \"generally treated as zero\" in averages, which conflicts with PA (use the reporting limit)"}], "notes": []}, {"eval_id": 2, "eval_name": "nodi-missed-sample", "configuration": "with_skill", "run_number": 1, "result": {"pass_rate": 1.0, "passed": 5, "failed": 0, "total": 5, "time_seconds": 26.4, "tokens": 51946, "tool_calls": 0, "errors": 0}, "expectations": [{"text": "Identifies PA NODI code E (missed sample / analysis not conducted) for the missing sample", "passed": true, "evidence": "PA NODI code E"}, {"text": "States that using E results in a reporting violation", "passed": true, "evidence": "E is itself a violation; sample-frequency violation"}, {"text": "Mentions an explanatory comment and/or the Non-Compliance Reporting Form (3800-FM-BCW0440)", "passed": true, "evidence": "Comment plus Form 3800-FM-BCW0440"}, {"text": "Says not to use No Discharge (C) because the facility did discharge", "passed": true, "evidence": "Not No Discharge"}, {"text": "Still reports the one sample that was taken", "passed": true, "evidence": "Reports the collected sample"}], "notes": []}, {"eval_id": 2, "eval_name": "nodi-missed-sample", "configuration": "without_skill", "run_number": 1, "result": {"pass_rate": 0.6, "passed": 3, "failed": 2, "total": 5, "time_seconds": 20.4, "tokens": 45315, "tool_calls": 0, "errors": 0}, "expectations": [{"text": "Identifies PA NODI code E (missed sample / analysis not conducted) for the missing sample", "passed": false, "evidence": "Suggests Q for zero-sample case; never identifies E"}, {"text": "States that using E results in a reporting violation", "passed": false, "evidence": "Calls it a monitoring-frequency violation but not tied to code E"}, {"text": "Mentions an explanatory comment and/or the Non-Compliance Reporting Form (3800-FM-BCW0440)", "passed": true, "evidence": "Explanatory comment about autosampler failure (form not named)"}, {"text": "Says not to use No Discharge (C) because the facility did discharge", "passed": true, "evidence": "Says no NODI code should cover a sample that was collected; No Discharge not applicable"}, {"text": "Still reports the one sample that was taken", "passed": true, "evidence": "Reports the one valid sample"}], "notes": []}, {"eval_id": 3, "eval_name": "snc-copper-late", "configuration": "with_skill", "run_number": 1, "result": {"pass_rate": 1.0, "passed": 5, "failed": 0, "total": 5, "time_seconds": 25.9, "tokens": 49373, "tool_calls": 0, "errors": 0}, "expectations": [{"text": "Classifies copper as a Group II pollutant (toxic metal) with a technical review criterion of 1.2x the limit (20% over)", "passed": true, "evidence": "Copper is a metal, Group II (1.2x); notes group should be confirmed"}, {"text": "Concludes 25% over in 2 of 6 months MEETS the TRC, so the effluent criterion for SNC is met", "passed": true, "evidence": "1.25x in 2 of 6 months meets TRC (\"probable TRC SNC\", conditional on Group II)"}, {"text": "Notes the chronic criterion (4 of 6 months) is not met by two months", "passed": true, "evidence": "Chronic needs 4 of 6; 2 does not meet"}, {"text": "Says the DMR filed 45 days late is a reporting violation that can independently count toward SNC (30+ days late)", "passed": true, "evidence": "45-day-late DMR is a reporting violation counting toward SNC (flags 30-day as [G])"}, {"text": "States that SNC status is assigned by EPA/the state and the permittee's own reading is indicative", "passed": true, "evidence": "SNC assigned by EPA/state; assessment indicative"}], "notes": []}, {"eval_id": 3, "eval_name": "snc-copper-late", "configuration": "without_skill", "run_number": 1, "result": {"pass_rate": 0.8, "passed": 4, "failed": 1, "total": 5, "time_seconds": 26.9, "tokens": 46338, "tool_calls": 0, "errors": 0}, "expectations": [{"text": "Classifies copper as a Group II pollutant (toxic metal) with a technical review criterion of 1.2x the limit (20% over)", "passed": true, "evidence": "Metal, Group II, TRC 1.2 (20% over)"}, {"text": "Concludes 25% over in 2 of 6 months MEETS the TRC, so the effluent criterion for SNC is met", "passed": true, "evidence": "Concludes TRC met, but via an invented \"33% of measurements\" test rather than 2+ months in 6"}, {"text": "Notes the chronic criterion (4 of 6 months) is not met by two months", "passed": true, "evidence": "Chronic 4 of 6 not met"}, {"text": "Says the DMR filed 45 days late is a reporting violation that can independently count toward SNC (30+ days late)", "passed": true, "evidence": "DMR 30+ days late counts; 45 qualifies"}, {"text": "States that SNC status is assigned by EPA/the state and the permittee's own reading is indicative", "passed": false, "evidence": "Does not say SNC is assigned by EPA/state or that the permittee reading is indicative; only \"verify against current text\""}], "notes": []}], "run_summary": {"with_skill": {"pass_rate": {"mean": 1.0, "stddev": 0.0, "min": 1.0, "max": 1.0}, "time_seconds": {"mean": 24.333, "stddev": 2.577, "min": 20.7, "max": 26.4}, "tokens": {"mean": 50612.667, "stddev": 1052.509, "min": 49373, "max": 51946}}, "without_skill": {"pass_rate": {"mean": 0.8, "stddev": 0.163, "min": 0.6, "max": 1.0}, "time_seconds": {"mean": 20.033, "stddev": 5.762, "min": 12.8, "max": 26.9}, "tokens": {"mean": 43871.333, "stddev": 2796.386, "min": 39961, "max": 46338}}, "delta": {"pass_rate": "+0.20", "time_seconds": "+4.30", "tokens": "+6741.33"}}, "notes": ["snc-copper-late: both reach \"SNC likely\", but the baseline used an invented \"33% of measurements\" test and never said SNC is assigned by EPA/state; the skill followed the verified 2-of-6-months TRC criteria.", "nodi-missed-sample again discriminates: baseline suggests code Q and never names E.", "nd-copper passes 5/5 in both; baseline also says non-detects are \"generally treated as zero\" in averages, which conflicts with PA (reporting limit) - not covered by an assertion, add one.", "snc-copper-late with-skill hedges on copper being Group II because the skill lists Group I/II only by example; adding a short Group II list to references would remove the hedge."]}};
+
+    // ---- State ----
+    let feedbackMap = {};  // run_id -> feedback text
+    let currentIndex = 0;
+    let visitedRuns = new Set();
+
+    // ---- Init ----
+    async function init() {
+      // Load saved feedback from server — but only if this isn't a fresh
+      // iteration (indicated by previous_feedback being present). When
+      // previous feedback exists, the feedback.json on disk is stale from
+      // the prior iteration and should not pre-fill the textareas.
+      const hasPrevious = Object.keys(EMBEDDED_DATA.previous_feedback || {}).length > 0
+        || Object.keys(EMBEDDED_DATA.previous_outputs || {}).length > 0;
+      if (!hasPrevious) {
+        try {
+          const resp = await fetch("/api/feedback");
+          const data = await resp.json();
+          if (data.reviews) {
+            for (const r of data.reviews) feedbackMap[r.run_id] = r.feedback;
+          }
+        } catch { /* first run, no feedback yet */ }
+      }
+
+      document.getElementById("skill-name").textContent = EMBEDDED_DATA.skill_name;
+      showRun(0);
+
+      // Wire up feedback auto-save
+      const textarea = document.getElementById("feedback");
+      let saveTimeout = null;
+      textarea.addEventListener("input", () => {
+        clearTimeout(saveTimeout);
+        document.getElementById("feedback-status").textContent = "";
+        saveTimeout = setTimeout(() => saveCurrentFeedback(), 800);
+      });
+    }
+
+    // ---- Navigation ----
+    function navigate(delta) {
+      const newIndex = currentIndex + delta;
+      if (newIndex >= 0 && newIndex < EMBEDDED_DATA.runs.length) {
+        saveCurrentFeedback();
+        showRun(newIndex);
+      }
+    }
+
+    function updateNavButtons() {
+      document.getElementById("prev-btn").disabled = currentIndex === 0;
+      document.getElementById("next-btn").disabled =
+        currentIndex === EMBEDDED_DATA.runs.length - 1;
+    }
+
+    // ---- Show a run ----
+    function showRun(index) {
+      currentIndex = index;
+      const run = EMBEDDED_DATA.runs[index];
+
+      // Progress
+      document.getElementById("progress").textContent =
+        `${index + 1} of ${EMBEDDED_DATA.runs.length}`;
+
+      // Prompt
+      document.getElementById("prompt-text").textContent = run.prompt;
+
+      // Config badge
+      const badge = document.getElementById("config-badge");
+      const configMatch = run.id.match(/(with_skill|without_skill|new_skill|old_skill)/);
+      if (configMatch) {
+        const config = configMatch[1];
+        const isBaseline = config === "without_skill" || config === "old_skill";
+        badge.textContent = config.replace(/_/g, " ");
+        badge.className = "config-badge " + (isBaseline ? "config-baseline" : "config-primary");
+        badge.style.display = "inline-block";
+      } else {
+        badge.style.display = "none";
+      }
+
+      // Outputs
+      renderOutputs(run);
+
+      // Previous outputs
+      renderPrevOutputs(run);
+
+      // Grades
+      renderGrades(run);
+
+      // Previous feedback
+      const prevFb = (EMBEDDED_DATA.previous_feedback || {})[run.id];
+      const prevEl = document.getElementById("prev-feedback");
+      if (prevFb) {
+        document.getElementById("prev-feedback-text").textContent = prevFb;
+        prevEl.style.display = "block";
+      } else {
+        prevEl.style.display = "none";
+      }
+
+      // Feedback
+      document.getElementById("feedback").value = feedbackMap[run.id] || "";
+      document.getElementById("feedback-status").textContent = "";
+
+      updateNavButtons();
+
+      // Track visited runs and promote done button when all visited
+      visitedRuns.add(index);
+      const doneBtn = document.getElementById("done-btn");
+      if (visitedRuns.size >= EMBEDDED_DATA.runs.length) {
+        doneBtn.classList.add("ready");
+      }
+
+      // Scroll main content to top
+      document.querySelector(".main").scrollTop = 0;
+    }
+
+    // ---- Render outputs ----
+    function renderOutputs(run) {
+      const container = document.getElementById("outputs-body");
+      container.innerHTML = "";
+
+      const outputs = run.outputs || [];
+      if (outputs.length === 0) {
+        container.innerHTML = '<div class="empty-state">No output files</div>';
+        return;
+      }
+
+      for (const file of outputs) {
+        const fileDiv = document.createElement("div");
+        fileDiv.className = "output-file";
+
+        // Always show file header with download link
+        const header = document.createElement("div");
+        header.className = "output-file-header";
+        const nameSpan = document.createElement("span");
+        nameSpan.textContent = file.name;
+        header.appendChild(nameSpan);
+        const dlBtn = document.createElement("a");
+        dlBtn.className = "dl-btn";
+        dlBtn.textContent = "Download";
+        dlBtn.download = file.name;
+        dlBtn.href = getDownloadUri(file);
+        header.appendChild(dlBtn);
+        fileDiv.appendChild(header);
+
+        const content = document.createElement("div");
+        content.className = "output-file-content";
+
+        if (file.type === "text") {
+          const pre = document.createElement("pre");
+          pre.textContent = file.content;
+          content.appendChild(pre);
+        } else if (file.type === "image") {
+          const img = document.createElement("img");
+          img.src = file.data_uri;
+          img.alt = file.name;
+          content.appendChild(img);
+        } else if (file.type === "pdf") {
+          const iframe = document.createElement("iframe");
+          iframe.src = file.data_uri;
+          content.appendChild(iframe);
+        } else if (file.type === "xlsx") {
+          renderXlsx(content, file.data_b64);
+        } else if (file.type === "binary") {
+          const a = document.createElement("a");
+          a.className = "download-link";
+          a.href = file.data_uri;
+          a.download = file.name;
+          a.textContent = "Download " + file.name;
+          content.appendChild(a);
+        } else if (file.type === "error") {
+          const pre = document.createElement("pre");
+          pre.textContent = file.content;
+          pre.style.color = "var(--red)";
+          content.appendChild(pre);
+        }
+
+        fileDiv.appendChild(content);
+        container.appendChild(fileDiv);
+      }
+    }
+
+    // ---- XLSX rendering via SheetJS ----
+    function renderXlsx(container, b64Data) {
+      try {
+        const raw = Uint8Array.from(atob(b64Data), c => c.charCodeAt(0));
+        const wb = XLSX.read(raw, { type: "array" });
+
+        for (let i = 0; i < wb.SheetNames.length; i++) {
+          const sheetName = wb.SheetNames[i];
+          const ws = wb.Sheets[sheetName];
+
+          if (wb.SheetNames.length > 1) {
+            const sheetLabel = document.createElement("div");
+            sheetLabel.style.cssText =
+              "font-weight:600; font-size:0.8rem; color:#b0aea5; margin-top:0.5rem; margin-bottom:0.25rem;";
+            sheetLabel.textContent = "Sheet: " + sheetName;
+            container.appendChild(sheetLabel);
+          }
+
+          const htmlStr = XLSX.utils.sheet_to_html(ws, { editable: false });
+          const wrapper = document.createElement("div");
+          wrapper.innerHTML = htmlStr;
+          container.appendChild(wrapper);
+        }
+      } catch (err) {
+        container.textContent = "Error rendering spreadsheet: " + err.message;
+      }
+    }
+
+    // ---- Grades ----
+    function renderGrades(run) {
+      const section = document.getElementById("grades-section");
+      const content = document.getElementById("grades-content");
+
+      if (!run.grading) {
+        section.style.display = "none";
+        return;
+      }
+
+      const grading = run.grading;
+      section.style.display = "block";
+      // Reset to collapsed
+      content.classList.remove("open");
+      document.getElementById("grades-arrow").classList.remove("open");
+
+      const summary = grading.summary || {};
+      const expectations = grading.expectations || [];
+
+      let html = '<div style="padding: 1rem;">';
+
+      // Summary line
+      const passRate = summary.pass_rate != null
+        ? Math.round(summary.pass_rate * 100) + "%"
+        : "?";
+      const badgeClass = summary.pass_rate >= 0.8 ? "grade-pass" : summary.pass_rate >= 0.5 ? "" : "grade-fail";
+      html += '<div class="grades-summary">';
+      html += '<span class="grade-badge ' + badgeClass + '">' + passRate + '</span>';
+      html += '<span>' + (summary.passed || 0) + ' passed, ' + (summary.failed || 0) + ' failed of ' + (summary.total || 0) + '</span>';
+      html += '</div>';
+
+      // Assertions list
+      html += '<ul class="assertion-list">';
+      for (const exp of expectations) {
+        const statusClass = exp.passed ? "pass" : "fail";
+        const statusIcon = exp.passed ? "\u2713" : "\u2717";
+        html += '<li class="assertion-item">';
+        html += '<span class="assertion-status ' + statusClass + '">' + statusIcon + '</span>';
+        html += '<span>' + escapeHtml(exp.text) + '</span>';
+        if (exp.evidence) {
+          html += '<div class="assertion-evidence">' + escapeHtml(exp.evidence) + '</div>';
+        }
+        html += '</li>';
+      }
+      html += '</ul>';
+
+      html += '</div>';
+      content.innerHTML = html;
+    }
+
+    function toggleGrades() {
+      const content = document.getElementById("grades-content");
+      const arrow = document.getElementById("grades-arrow");
+      content.classList.toggle("open");
+      arrow.classList.toggle("open");
+    }
+
+    // ---- Previous outputs (collapsible) ----
+    function renderPrevOutputs(run) {
+      const section = document.getElementById("prev-outputs-section");
+      const content = document.getElementById("prev-outputs-content");
+      const prevOutputs = (EMBEDDED_DATA.previous_outputs || {})[run.id];
+
+      if (!prevOutputs || prevOutputs.length === 0) {
+        section.style.display = "none";
+        return;
+      }
+
+      section.style.display = "block";
+      // Reset to collapsed
+      content.classList.remove("open");
+      document.getElementById("prev-outputs-arrow").classList.remove("open");
+
+      // Render the files into the content area
+      content.innerHTML = "";
+      const wrapper = document.createElement("div");
+      wrapper.style.padding = "1rem";
+
+      for (const file of prevOutputs) {
+        const fileDiv = document.createElement("div");
+        fileDiv.className = "output-file";
+
+        const header = document.createElement("div");
+        header.className = "output-file-header";
+        const nameSpan = document.createElement("span");
+        nameSpan.textContent = file.name;
+        header.appendChild(nameSpan);
+        const dlBtn = document.createElement("a");
+        dlBtn.className = "dl-btn";
+        dlBtn.textContent = "Download";
+        dlBtn.download = file.name;
+        dlBtn.href = getDownloadUri(file);
+        header.appendChild(dlBtn);
+        fileDiv.appendChild(header);
+
+        const fc = document.createElement("div");
+        fc.className = "output-file-content";
+
+        if (file.type === "text") {
+          const pre = document.createElement("pre");
+          pre.textContent = file.content;
+          fc.appendChild(pre);
+        } else if (file.type === "image") {
+          const img = document.createElement("img");
+          img.src = file.data_uri;
+          img.alt = file.name;
+          fc.appendChild(img);
+        } else if (file.type === "pdf") {
+          const iframe = document.createElement("iframe");
+          iframe.src = file.data_uri;
+          fc.appendChild(iframe);
+        } else if (file.type === "xlsx") {
+          renderXlsx(fc, file.data_b64);
+        } else if (file.type === "binary") {
+          const a = document.createElement("a");
+          a.className = "download-link";
+          a.href = file.data_uri;
+          a.download = file.name;
+          a.textContent = "Download " + file.name;
+          fc.appendChild(a);
+        }
+
+        fileDiv.appendChild(fc);
+        wrapper.appendChild(fileDiv);
+      }
+
+      content.appendChild(wrapper);
+    }
+
+    function togglePrevOutputs() {
+      const content = document.getElementById("prev-outputs-content");
+      const arrow = document.getElementById("prev-outputs-arrow");
+      content.classList.toggle("open");
+      arrow.classList.toggle("open");
+    }
+
+    // ---- Feedback (saved to server -> feedback.json) ----
+    function saveCurrentFeedback() {
+      const run = EMBEDDED_DATA.runs[currentIndex];
+      const text = document.getElementById("feedback").value;
+
+      if (text.trim() === "") {
+        delete feedbackMap[run.id];
+      } else {
+        feedbackMap[run.id] = text;
+      }
+
+      // Build reviews array from map
+      const reviews = [];
+      for (const [run_id, feedback] of Object.entries(feedbackMap)) {
+        if (feedback.trim()) {
+          reviews.push({ run_id, feedback, timestamp: new Date().toISOString() });
+        }
+      }
+
+      fetch("/api/feedback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reviews, status: "in_progress" }),
+      }).then(() => {
+        document.getElementById("feedback-status").textContent = "Saved";
+      }).catch(() => {
+        // Static mode or server unavailable — no-op on auto-save,
+        // feedback will be downloaded on final submit
+        document.getElementById("feedback-status").textContent = "Will download on submit";
+      });
+    }
+
+    // ---- Done ----
+    function showDoneDialog() {
+      // Save current textarea to feedbackMap (but don't POST yet)
+      const run = EMBEDDED_DATA.runs[currentIndex];
+      const text = document.getElementById("feedback").value;
+      if (text.trim() === "") {
+        delete feedbackMap[run.id];
+      } else {
+        feedbackMap[run.id] = text;
+      }
+
+      // POST once with status: complete — include ALL runs so the model
+      // can distinguish "no feedback" (looks good) from "not reviewed"
+      const reviews = [];
+      const ts = new Date().toISOString();
+      for (const r of EMBEDDED_DATA.runs) {
+        reviews.push({ run_id: r.id, feedback: feedbackMap[r.id] || "", timestamp: ts });
+      }
+      const payload = JSON.stringify({ reviews, status: "complete" }, null, 2);
+      fetch("/api/feedback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: payload,
+      }).then(() => {
+        document.getElementById("done-overlay").classList.add("visible");
+      }).catch(() => {
+        // Server not available (static mode) — download as file
+        const blob = new Blob([payload], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "feedback.json";
+        a.click();
+        URL.revokeObjectURL(url);
+        document.getElementById("done-overlay").classList.add("visible");
+      });
+    }
+
+    function closeDoneDialog() {
+      // Reset status back to in_progress
+      saveCurrentFeedback();
+      document.getElementById("done-overlay").classList.remove("visible");
+    }
+
+    // ---- Toast ----
+    function showToast(message) {
+      const toast = document.getElementById("toast");
+      toast.textContent = message;
+      toast.classList.add("visible");
+      setTimeout(() => toast.classList.remove("visible"), 2000);
+    }
+
+    // ---- Keyboard nav ----
+    document.addEventListener("keydown", (e) => {
+      // Don't capture when typing in textarea
+      if (e.target.tagName === "TEXTAREA") return;
+
+      if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
+        e.preventDefault();
+        navigate(-1);
+      } else if (e.key === "ArrowRight" || e.key === "ArrowDown") {
+        e.preventDefault();
+        navigate(1);
+      }
+    });
+
+    // ---- Util ----
+    function getDownloadUri(file) {
+      if (file.data_uri) return file.data_uri;
+      if (file.data_b64) return "data:application/octet-stream;base64," + file.data_b64;
+      if (file.type === "text") return "data:text/plain;charset=utf-8," + encodeURIComponent(file.content);
+      return "#";
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement("div");
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    // ---- View switching ----
+    function switchView(view) {
+      document.querySelectorAll(".view-tab").forEach(t => t.classList.remove("active"));
+      document.querySelectorAll(".view-panel").forEach(p => p.classList.remove("active"));
+      document.querySelector(`[onclick="switchView('${view}')"]`).classList.add("active");
+      document.getElementById("panel-" + view).classList.add("active");
+    }
+
+    // ---- Benchmark rendering ----
+    function renderBenchmark() {
+      const data = EMBEDDED_DATA.benchmark;
+      if (!data) return;
+
+      // Show the tabs
+      document.getElementById("view-tabs").style.display = "flex";
+
+      const container = document.getElementById("benchmark-content");
+      const summary = data.run_summary || {};
+      const metadata = data.metadata || {};
+      const notes = data.notes || [];
+
+      let html = "";
+
+      // Header
+      html += "<h2 style='font-family: Poppins, sans-serif; margin-bottom: 0.5rem;'>Benchmark Results</h2>";
+      html += "<p style='color: var(--text-muted); font-size: 0.875rem; margin-bottom: 1.25rem;'>";
+      if (metadata.skill_name) html += "<strong>" + escapeHtml(metadata.skill_name) + "</strong> &mdash; ";
+      if (metadata.timestamp) html += metadata.timestamp + " &mdash; ";
+      if (metadata.evals_run) html += "Evals: " + metadata.evals_run.join(", ") + " &mdash; ";
+      html += (metadata.runs_per_configuration || "?") + " runs per configuration";
+      html += "</p>";
+
+      // Summary table
+      html += '<table class="benchmark-table">';
+
+      function fmtStat(stat, pct) {
+        if (!stat) return "—";
+        const suffix = pct ? "%" : "";
+        const m = pct ? (stat.mean * 100).toFixed(0) : stat.mean.toFixed(1);
+        const s = pct ? (stat.stddev * 100).toFixed(0) : stat.stddev.toFixed(1);
+        return m + suffix + " ± " + s + suffix;
+      }
+
+      function deltaClass(val) {
+        if (!val) return "";
+        const n = parseFloat(val);
+        if (n > 0) return "benchmark-delta-positive";
+        if (n < 0) return "benchmark-delta-negative";
+        return "";
+      }
+
+      // Discover config names dynamically (everything except "delta")
+      const configs = Object.keys(summary).filter(k => k !== "delta");
+      const configA = configs[0] || "config_a";
+      const configB = configs[1] || "config_b";
+      const labelA = configA.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+      const labelB = configB.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+      const a = summary[configA] || {};
+      const b = summary[configB] || {};
+      const delta = summary.delta || {};
+
+      html += "<thead><tr><th>Metric</th><th>" + escapeHtml(labelA) + "</th><th>" + escapeHtml(labelB) + "</th><th>Delta</th></tr></thead>";
+      html += "<tbody>";
+
+      html += "<tr><td><strong>Pass Rate</strong></td>";
+      html += "<td>" + fmtStat(a.pass_rate, true) + "</td>";
+      html += "<td>" + fmtStat(b.pass_rate, true) + "</td>";
+      html += '<td class="' + deltaClass(delta.pass_rate) + '">' + (delta.pass_rate || "—") + "</td></tr>";
+
+      // Time (only show row if data exists)
+      if (a.time_seconds || b.time_seconds) {
+        html += "<tr><td><strong>Time (s)</strong></td>";
+        html += "<td>" + fmtStat(a.time_seconds, false) + "</td>";
+        html += "<td>" + fmtStat(b.time_seconds, false) + "</td>";
+        html += '<td class="' + deltaClass(delta.time_seconds) + '">' + (delta.time_seconds ? delta.time_seconds + "s" : "—") + "</td></tr>";
+      }
+
+      // Tokens (only show row if data exists)
+      if (a.tokens || b.tokens) {
+        html += "<tr><td><strong>Tokens</strong></td>";
+        html += "<td>" + fmtStat(a.tokens, false) + "</td>";
+        html += "<td>" + fmtStat(b.tokens, false) + "</td>";
+        html += '<td class="' + deltaClass(delta.tokens) + '">' + (delta.tokens || "—") + "</td></tr>";
+      }
+
+      html += "</tbody></table>";
+
+      // Per-eval breakdown (if runs data available)
+      const runs = data.runs || [];
+      if (runs.length > 0) {
+        const evalIds = [...new Set(runs.map(r => r.eval_id))].sort((a, b) => a - b);
+
+        html += "<h3 style='font-family: Poppins, sans-serif; margin-bottom: 0.75rem;'>Per-Eval Breakdown</h3>";
+
+        const hasTime = runs.some(r => r.result && r.result.time_seconds != null);
+        const hasErrors = runs.some(r => r.result && r.result.errors > 0);
+
+        for (const evalId of evalIds) {
+          const evalRuns = runs.filter(r => r.eval_id === evalId);
+          const evalName = evalRuns[0] && evalRuns[0].eval_name ? evalRuns[0].eval_name : "Eval " + evalId;
+
+          html += "<h4 style='font-family: Poppins, sans-serif; margin: 1rem 0 0.5rem; color: var(--text);'>" + escapeHtml(evalName) + "</h4>";
+          html += '<table class="benchmark-table">';
+          html += "<thead><tr><th>Config</th><th>Run</th><th>Pass Rate</th>";
+          if (hasTime) html += "<th>Time (s)</th>";
+          if (hasErrors) html += "<th>Crashes During Execution</th>";
+          html += "</tr></thead>";
+          html += "<tbody>";
+
+          // Group by config and render with average rows
+          const configGroups = [...new Set(evalRuns.map(r => r.configuration))];
+          for (let ci = 0; ci < configGroups.length; ci++) {
+            const config = configGroups[ci];
+            const configRuns = evalRuns.filter(r => r.configuration === config);
+            if (configRuns.length === 0) continue;
+
+            const rowClass = ci === 0 ? "benchmark-row-with" : "benchmark-row-without";
+            const configLabel = config.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+
+            for (const run of configRuns) {
+              const r = run.result || {};
+              const prClass = r.pass_rate >= 0.8 ? "benchmark-delta-positive" : r.pass_rate < 0.5 ? "benchmark-delta-negative" : "";
+              html += '<tr class="' + rowClass + '">';
+              html += "<td>" + configLabel + "</td>";
+              html += "<td>" + run.run_number + "</td>";
+              html += '<td class="' + prClass + '">' + ((r.pass_rate || 0) * 100).toFixed(0) + "% (" + (r.passed || 0) + "/" + (r.total || 0) + ")</td>";
+              if (hasTime) html += "<td>" + (r.time_seconds != null ? r.time_seconds.toFixed(1) : "—") + "</td>";
+              if (hasErrors) html += "<td>" + (r.errors || 0) + "</td>";
+              html += "</tr>";
+            }
+
+            // Average row
+            const rates = configRuns.map(r => (r.result || {}).pass_rate || 0);
+            const avgRate = rates.reduce((a, b) => a + b, 0) / rates.length;
+            const avgPrClass = avgRate >= 0.8 ? "benchmark-delta-positive" : avgRate < 0.5 ? "benchmark-delta-negative" : "";
+            html += '<tr class="benchmark-row-avg ' + rowClass + '">';
+            html += "<td>" + configLabel + "</td>";
+            html += "<td>Avg</td>";
+            html += '<td class="' + avgPrClass + '">' + (avgRate * 100).toFixed(0) + "%</td>";
+            if (hasTime) {
+              const times = configRuns.map(r => (r.result || {}).time_seconds).filter(t => t != null);
+              html += "<td>" + (times.length ? (times.reduce((a, b) => a + b, 0) / times.length).toFixed(1) : "—") + "</td>";
+            }
+            if (hasErrors) html += "<td></td>";
+            html += "</tr>";
+          }
+          html += "</tbody></table>";
+
+          // Per-assertion detail for this eval
+          const runsWithExpectations = {};
+          for (const config of configGroups) {
+            runsWithExpectations[config] = evalRuns.filter(r => r.configuration === config && r.expectations && r.expectations.length > 0);
+          }
+          const hasAnyExpectations = Object.values(runsWithExpectations).some(runs => runs.length > 0);
+          if (hasAnyExpectations) {
+            // Collect all unique assertion texts across all configs
+            const allAssertions = [];
+            const seen = new Set();
+            for (const config of configGroups) {
+              for (const run of runsWithExpectations[config]) {
+                for (const exp of (run.expectations || [])) {
+                  if (!seen.has(exp.text)) {
+                    seen.add(exp.text);
+                    allAssertions.push(exp.text);
+                  }
+                }
+              }
+            }
+
+            html += '<table class="benchmark-table" style="margin-top: 0.5rem;">';
+            html += "<thead><tr><th>Assertion</th>";
+            for (const config of configGroups) {
+              const label = config.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+              html += "<th>" + escapeHtml(label) + "</th>";
+            }
+            html += "</tr></thead><tbody>";
+
+            for (const assertionText of allAssertions) {
+              html += "<tr><td>" + escapeHtml(assertionText) + "</td>";
+
+              for (const config of configGroups) {
+                html += "<td>";
+                for (const run of runsWithExpectations[config]) {
+                  const exp = (run.expectations || []).find(e => e.text === assertionText);
+                  if (exp) {
+                    const cls = exp.passed ? "benchmark-delta-positive" : "benchmark-delta-negative";
+                    const icon = exp.passed ? "\u2713" : "\u2717";
+                    html += '<span class="' + cls + '" title="Run ' + run.run_number + ': ' + escapeHtml(exp.evidence || "") + '">' + icon + "</span> ";
+                  } else {
+                    html += "— ";
+                  }
+                }
+                html += "</td>";
+              }
+              html += "</tr>";
+            }
+            html += "</tbody></table>";
+          }
+        }
+      }
+
+      // Notes
+      if (notes.length > 0) {
+        html += '<div class="benchmark-notes">';
+        html += "<h3>Analysis Notes</h3>";
+        html += "<ul>";
+        for (const note of notes) {
+          html += "<li>" + escapeHtml(note) + "</li>";
+        }
+        html += "</ul></div>";
+      }
+
+      container.innerHTML = html;
+    }
+
+    // ---- Start ----
+    init();
+    renderBenchmark();
+  </script>
+</body>
+</html>

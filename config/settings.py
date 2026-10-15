@@ -28,7 +28,16 @@ DEBUG = env.bool('DEBUG', default=False)
 
 ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=[])
 
-GEMINI_API_KEY = env('GEMINI_API_KEY', default='')
+# Claude: evidence review (apps.ingestion.claude_review) and the validation
+# explanation layer (apps.ai_assist)
+ANTHROPIC_API_KEY = env('ANTHROPIC_API_KEY', default='')
+CLAUDE_MODEL = env('CLAUDE_MODEL', default='claude-sonnet-5-5')
+# Tried in order when CLAUDE_MODEL is overloaded or unavailable.
+CLAUDE_FALLBACK_MODELS = env.list('CLAUDE_FALLBACK_MODELS', default=['claude-haiku-5-5'])
+CLAUDE_TIMEOUT_SECONDS = env.int('CLAUDE_TIMEOUT_SECONDS', default=90)
+# An in-review item with no result after this long is marked as errored so
+# the user can restart it (e.g. the server process died mid-review).
+REVIEW_STALE_SECONDS = env.int('REVIEW_STALE_SECONDS', default=300)
 
 # Stage 1 Racket rule engine (see dsl/README.md for the CLI contract).
 DSL_ROOT = BASE_DIR / 'dsl'
@@ -45,6 +54,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'apps.accounts.apps.AccountsConfig',
     'apps.facilities.apps.FacilitiesConfig',
     'apps.ingestion.apps.IngestionConfig',
     'apps.validation.apps.ValidationConfig',
@@ -130,4 +140,13 @@ USE_TZ = True
 STATIC_URL = 'static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
 
+MEDIA_URL = 'media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+AUTH_USER_MODEL = 'accounts.User'
+
+LOGIN_URL = 'login'
+LOGIN_REDIRECT_URL = 'dashboard'
+LOGOUT_REDIRECT_URL = 'login'

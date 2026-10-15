@@ -66,7 +66,7 @@ Every failure mode is classified into an `EngineError(code, message)`:
 | `file-error` | Slug is well-formed but no matching `.rkt` file exists |
 | `timeout` | `subprocess.TimeoutExpired` |
 | `invalid-json` | Engine exited 0 but stdout wasn't valid JSON |
-| `unexpected-schema-version` | Engine's `schema_version` wasn't 1 |
+| `unexpected-schema-version` | Engine's `schema_version` wasn't 3 |
 | `engine-crash` | Nonzero exit and stdout wasn't the documented `{"error": {...}}` shape |
 | *(anything else)* | Passed through verbatim from the engine's own `{"error": {"code", "message"}}` |
 
@@ -87,12 +87,12 @@ explain_result(limit_result_id: int) -> str
 ```
 
 Reads one `LimitResult`'s trace fields (read-only), builds a prompt,
-calls Gemini, and writes the response to `gemini_explanation` via a
+calls Claude, and writes the response to `gemini_explanation` via a
 **targeted `.update()`** — not a full model `.save()` — so a concurrent
 change to other fields can't be clobbered. Any failure (API error, network,
 quota) raises `ExplanationError` **without writing anything**, so a failed
 explanation attempt can never blank out or alter a previously stored
-result. Gemini is called after `run_validation` has already committed;
+result. Claude is called after `run_validation` has already committed;
 there is no path by which an explanation failure affects a stored status.
 
 ## Evidence views (`apps/validation/views.py`, `apps/validation/urls.py`)
@@ -122,7 +122,8 @@ failure of the page itself.
 
 Status badges (`STATUS_BADGE_CLASSES` in `views.py`) are a fixed dict keyed
 by the engine's literal status string — `pass`, `exceedance`,
-`missing-data`, `unit-error`, `report-only` — and nothing else computes or
+`missing-data`, `unit-error`, `report-only`, `review-required`,
+`under-sampled` — and nothing else computes or
 restyles them; in particular, AI-generated text is never used to pick a
 badge.
 

@@ -23,7 +23,7 @@ from apps.validation.models import (
     ValidationRun,
 )
 
-EXPECTED_SCHEMA_VERSION = 1
+EXPECTED_SCHEMA_VERSION = 3
 
 _SLUG_RE = re.compile(r"^[a-z0-9][a-z0-9_-]*$")
 

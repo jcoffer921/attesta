@@ -20,7 +20,7 @@
 (struct pipeline-def (name steps) #:transparent)
 (struct step:map-column (from to) #:transparent)
 (struct step:convert-units (from-unit to-unit) #:transparent)
-(struct step:non-detect (marker treat-as) #:transparent)
+(struct step:non-detect (marker treat-as basis) #:transparent)
 (struct step:require-field (fields) #:transparent)
 
 (define-syntax (pipeline stx)
@@ -39,19 +39,29 @@
      #'(step:convert-units 'from 'to)]))
 
 ;; non-detect requires an explicit, valid treat-as; there is no default.
-;; An omitted or misspelled treat-as is a macro-expansion-time error.
+;; `report-limit` (use the reporting limit, flag the value as a non-detect) is
+;; the PA DEP convention. `zero` is only legitimate when the permit limit is
+;; below the most sensitive detection limit, so it must carry a (basis "...")
+;; citing why. An omitted, misspelled, or unjustified treat-as is a
+;; macro-expansion-time error.
 (define-syntax (non-detect stx)
-  (syntax-case stx (marker treat-as)
-    [(_ (marker m) (treat-as t))
-     (memq (syntax-e #'t) '(zero half-mdl report-limit))
-     #'(step:non-detect m 't)]
-    [(_ (marker m) (treat-as t))
+  (syntax-case stx (marker treat-as basis report-limit zero)
+    [(_ (marker m) (treat-as report-limit))
+     #'(step:non-detect m 'report-limit #f)]
+    [(_ (marker m) (treat-as zero) (basis b))
+     (string? (syntax-e #'b))
+     #'(step:non-detect m 'zero b)]
+    [(_ (marker m) (treat-as zero))
      (raise-syntax-error 'non-detect
-                          "treat-as must be exactly one of: zero, half-mdl, report-limit (no default is provided)"
+                          "treat-as zero requires (basis \"...\") citing why zero is permitted (e.g. permit limit below the most sensitive detection limit)"
+                          stx)]
+    [(_ (marker m) (treat-as t) . _rest)
+     (raise-syntax-error 'non-detect
+                          "treat-as must be report-limit, or zero with a (basis \"...\") (no default is provided)"
                           stx #'t)]
     [(_ . _rest)
      (raise-syntax-error 'non-detect
-                          "expected (non-detect (marker \"<\") (treat-as zero|half-mdl|report-limit))"
+                          "expected (non-detect (marker \"<\") (treat-as report-limit)) or (non-detect (marker \"<\") (treat-as zero) (basis \"...\"))"
                           stx)]))
 
 (define-syntax (require-field stx)

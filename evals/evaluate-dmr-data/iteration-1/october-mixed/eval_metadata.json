@@ -1,0 +1,14 @@
+{
+  "eval_id": 1,
+  "eval_name": "october-mixed",
+  "prompt": "Run the October 2026 samples in evals/evaluate-dmr-data/iteration-1/october-mixed/inputs/records.json through the Attesta engine against permit pa0000000 (pipeline lab-csv-import, period 2026-10) and tell me whether we're compliant. Racket is at C:\\Program Files\\Racket. Save your written analysis to the outputs folder as analysis.md.",
+  "assertions": [
+    "Actually ran the engine (cites the racket command or its JSON output) rather than computing by hand",
+    "Reports TSS monthly-avg and TSS daily-max as exceedance with computed values 39 and 62",
+    "Reports pH as missing-data (fewer samples than the weekly frequency requires)",
+    "Reports the Flow limit as report-only",
+    "Identifies the record p5 as rejected because the method field is missing and does not silently drop it",
+    "Reconciles record counts (9 in = 8 used + 1 rejected)",
+    "Does not declare the facility compliant, and lists what the engine does not evaluate (e.g. mass loads, late submission, NODI validity)"
+  ]
+}

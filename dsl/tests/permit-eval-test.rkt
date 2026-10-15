@@ -45,11 +45,29 @@
   (check-equal? (trace-status (find-trace (evaluate-permit p below "2026-03") "pH" "range")) 'exceedance)
   (check-equal? (trace-status (find-trace (evaluate-permit p above "2026-03") "pH" "range")) 'exceedance))
 
-;; --- missing-data: fewer samples than the declared frequency ---
-(test-case "missing-data: fewer samples than required in the period"
+;; --- under-sampled: fewer samples than the declared frequency ---
+;; The available samples are still evaluated; the shortfall is a separate trace.
+(test-case "under-sampled: short count still evaluates the available data"
   (define p (permit "PA0000000" (outfall 1 (limit "TSS" (monthly-avg 30 mg/L) (sample 2 per-month)))))
   (define samples (list (s "a1" 1 "TSS" "10" 'mg/L "2026-03-05")))
-  (check-equal? (trace-status (find-trace (evaluate-permit p samples "2026-03") "TSS" "monthly-avg")) 'missing-data))
+  (define r (evaluate-permit p samples "2026-03"))
+  (check-equal? (trace-status (find-trace r "TSS" "monthly-avg")) 'pass)
+  (define f (find-trace r "TSS" "sample-frequency"))
+  (check-equal? (trace-status f) 'under-sampled)
+  (check-equal? (trace-computed-value f) "1")
+  (check-equal? (trace-threshold f) "2"))
+
+(test-case "under-sampled: a short count never masks an exceedance"
+  (define p (permit "PA0000000" (outfall 1 (limit "TSS" (daily-max 60 mg/L) (sample 2 per-month)))))
+  (define samples (list (s "a1" 1 "TSS" "70" 'mg/L "2026-03-05")))
+  (define r (evaluate-permit p samples "2026-03"))
+  (check-equal? (trace-status (find-trace r "TSS" "daily-max")) 'exceedance)
+  (check-equal? (trace-status (find-trace r "TSS" "sample-frequency")) 'under-sampled))
+
+(test-case "no sample-frequency trace when the requirement is met"
+  (define p (permit "PA0000000" (outfall 1 (limit "TSS" (monthly-avg 30 mg/L) (sample 2 per-month)))))
+  (define samples (list (s "a1" 1 "TSS" "10" 'mg/L "2026-03-05") (s "a2" 1 "TSS" "12" 'mg/L "2026-03-12")))
+  (check-false (find-trace (evaluate-permit p samples "2026-03") "TSS" "sample-frequency")))
 
 ;; --- missing-data: an empty month (zero samples), even with no explicit sample clause ---
 (test-case "missing-data: empty month with zero samples cannot be evaluated"
@@ -57,12 +75,15 @@
   (define r (evaluate-permit p '() "2026-04"))
   (check-equal? (trace-status (find-trace r "Flow" "monthly-avg")) 'missing-data))
 
-;; --- missing-data: per-week frequency shortfall ---
-(test-case "missing-data: per-week sample frequency shortfall over the month"
+;; --- under-sampled: per-week frequency shortfall ---
+(test-case "under-sampled: per-week sample frequency shortfall over the month"
   (define p (permit "PA0000000" (outfall 1 (limit "pH" (range #e6.0 #e9.0 s.u.) (sample 1 per-week)))))
   ;; March 2026 has 31 days -> 5 week-buckets required; only one sample given.
   (define samples (list (s "p1" 1 "pH" "7.0" 's.u. "2026-03-05")))
-  (check-equal? (trace-status (find-trace (evaluate-permit p samples "2026-03") "pH" "range")) 'missing-data))
+  (define r (evaluate-permit p samples "2026-03"))
+  (check-equal? (trace-status (find-trace r "pH" "range")) 'pass)
+  (check-equal? (trace-status (find-trace r "pH" "sample-frequency")) 'under-sampled)
+  (check-equal? (trace-threshold (find-trace r "pH" "sample-frequency")) "5"))
 
 ;; --- unit-error: sample unit does not match the limit's unit, never auto-converted ---
 (test-case "unit-error: mismatched sample unit is never auto-converted"
@@ -91,3 +112,56 @@
   (define r (evaluate-permit p samples "2026-03"))
   (check-equal? (trace-status (find-trace r "TSS" "monthly-avg")) 'exceedance)
   (check-equal? (trace-status (find-trace r "TSS" "daily-max")) 'exceedance))
+
+;; --- PA DEP non-detect handling ---
+;; DEP worked example: <1.0, 2.0, <1.0, 1.0 averages to <1.3 (reporting limits
+;; stand in for the non-detects; the "<" qualifies the statistic).
+(test-case "non-detect: monthly-avg carries the < qualifier (PA DEP example)"
+  (define p (permit "PA0000000" (outfall 1 (limit "TSS" (monthly-avg 30 mg/L)))))
+  (define samples (list (s "a1" 1 "TSS" "1.0" 'mg/L "2026-03-01" #t)
+                        (s "a2" 1 "TSS" "2.0" 'mg/L "2026-03-02")
+                        (s "a3" 1 "TSS" "1.0" 'mg/L "2026-03-03" #t)
+                        (s "a4" 1 "TSS" "1.0" 'mg/L "2026-03-04")))
+  (define t (find-trace (evaluate-permit p samples "2026-03") "TSS" "monthly-avg"))
+  (check-equal? (trace-computed-value t) "<5/4")
+  (check-equal? (trace-status t) 'pass))
+
+(test-case "non-detect: no qualifier when nothing is a non-detect"
+  (define p (permit "PA0000000" (outfall 1 (limit "TSS" (monthly-avg 30 mg/L)))))
+  (define samples (list (s "a1" 1 "TSS" "10" 'mg/L "2026-03-01")))
+  (check-equal? (trace-computed-value (find-trace (evaluate-permit p samples "2026-03") "TSS" "monthly-avg")) "10"))
+
+(test-case "non-detect: daily-max over the limit only via a reporting limit needs review"
+  (define p (permit "PA0000000" (outfall 1 (limit "Cu" (daily-max 3 mg/L)))))
+  (define samples (list (s "a1" 1 "Cu" "5" 'mg/L "2026-03-01" #t)))
+  (define t (find-trace (evaluate-permit p samples "2026-03") "Cu" "daily-max"))
+  (check-equal? (trace-computed-value t) "<5")
+  (check-equal? (trace-status t) 'review-required))
+
+(test-case "non-detect: a detected value over the limit is still an exceedance"
+  (define p (permit "PA0000000" (outfall 1 (limit "Cu" (daily-max 3 mg/L)))))
+  (define samples (list (s "a1" 1 "Cu" "5" 'mg/L "2026-03-01" #t)
+                        (s "a2" 1 "Cu" "4" 'mg/L "2026-03-02")))
+  (define t (find-trace (evaluate-permit p samples "2026-03") "Cu" "daily-max"))
+  (check-equal? (trace-computed-value t) "<5")
+  (check-equal? (trace-status t) 'exceedance))
+
+(test-case "non-detect: monthly-avg over limit only because of reporting limits needs review"
+  (define p (permit "PA0000000" (outfall 1 (limit "Cu" (monthly-avg 3 mg/L)))))
+  (define samples (list (s "a1" 1 "Cu" "5" 'mg/L "2026-03-01" #t)
+                        (s "a2" 1 "Cu" "2" 'mg/L "2026-03-02")))
+  (define t (find-trace (evaluate-permit p samples "2026-03") "Cu" "monthly-avg"))
+  (check-equal? (trace-computed-value t) "<7/2")
+  (check-equal? (trace-status t) 'review-required))
+
+(test-case "non-detect: monthly-avg still an exceedance when detected values alone breach it"
+  (define p (permit "PA0000000" (outfall 1 (limit "Cu" (monthly-avg 3 mg/L)))))
+  (define samples (list (s "a1" 1 "Cu" "1" 'mg/L "2026-03-01" #t)
+                        (s "a2" 1 "Cu" "9" 'mg/L "2026-03-02")))
+  (define t (find-trace (evaluate-permit p samples "2026-03") "Cu" "monthly-avg"))
+  (check-equal? (trace-status t) 'exceedance))
+
+(test-case "non-detect: report-only limit stays report-only"
+  (define p (permit "PA0000000" (outfall 1 (limit "Cu" (monthly-avg 3 mg/L) (report-only)))))
+  (define samples (list (s "a1" 1 "Cu" "5" 'mg/L "2026-03-01" #t)))
+  (check-equal? (trace-status (find-trace (evaluate-permit p samples "2026-03") "Cu" "monthly-avg")) 'report-only))

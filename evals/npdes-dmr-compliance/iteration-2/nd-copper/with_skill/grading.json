@@ -1,0 +1,35 @@
+{
+  "expectations": [
+    {
+      "text": "States it is not simply a violation (and not a clean pass): compliance cannot be demonstrated or refuted from the result",
+      "passed": true,
+      "evidence": "Not a confirmed violation and not a pass; QL 5 > limit 3, inconclusive"
+    },
+    {
+      "text": "Says the value is reported as <5 (the quantitation/reporting limit), not as 0, ND, or No Discharge",
+      "passed": true,
+      "evidence": "Report <5; not 0, ND or NODI C"
+    },
+    {
+      "text": "Notes the reporting limit (5) is above the permit limit (3), i.e. the method is not sensitive enough, and recommends review/consulting the permit or DEP",
+      "passed": true,
+      "evidence": "QL above limit; check permit Part C, lower QL, ask DEP"
+    },
+    {
+      "text": "Does not claim a specific penalty or enforcement outcome",
+      "passed": true,
+      "evidence": "No penalty claim"
+    },
+    {
+      "text": "Does not conclude the result is compliant without first checking the permit's required method/quantitation limit",
+      "passed": true,
+      "evidence": "Tells user to check the permit Part C required QL before concluding"
+    }
+  ],
+  "summary": {
+    "passed": 5,
+    "failed": 0,
+    "total": 5,
+    "pass_rate": 1.0
+  }
+}

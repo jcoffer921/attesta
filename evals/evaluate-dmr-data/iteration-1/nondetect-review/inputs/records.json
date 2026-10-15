@@ -1,0 +1,7 @@
+{
+  "schema_version": 3,
+  "records": [
+    {"id": "n1", "outfall": 1, "Analyte": "TSS", "value": "<80", "unit": "mg/L", "sample_date": "2026-10-05", "method": "SM2540D"},
+    {"id": "n2", "outfall": 1, "Analyte": "TSS", "value": "10", "unit": "mg/L", "sample_date": "2026-10-19", "method": "SM2540D"}
+  ]
+}

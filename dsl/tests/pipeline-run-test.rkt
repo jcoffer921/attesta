@@ -44,17 +44,10 @@
 
 ;; --- non-detect: each treat-as option ---
 (test-case "non-detect treat-as zero"
-  (define pd (pipeline "p" (non-detect (marker "<") (treat-as zero))))
+  (define pd (pipeline "p" (non-detect (marker "<") (treat-as zero) (basis "Ch. 16 App. A Table 2A"))))
   (define-values (finals prov rej)
     (run-pipeline pd (list (rec 'id "r1" 'value "<5"))))
   (check-equal? (hash-ref (car finals) 'value) "0")
-  (check-true (hash-ref (car finals) 'non_detect)))
-
-(test-case "non-detect treat-as half-mdl"
-  (define pd (pipeline "p" (non-detect (marker "<") (treat-as half-mdl))))
-  (define-values (finals prov rej)
-    (run-pipeline pd (list (rec 'id "r1" 'value "<5"))))
-  (check-equal? (hash-ref (car finals) 'value) "5/2")
   (check-true (hash-ref (car finals) 'non_detect)))
 
 (test-case "non-detect treat-as report-limit"
@@ -65,7 +58,7 @@
   (check-true (hash-ref (car finals) 'non_detect)))
 
 (test-case "non-detect leaves a non-flagged value untouched but records non_detect: #f"
-  (define pd (pipeline "p" (non-detect (marker "<") (treat-as zero))))
+  (define pd (pipeline "p" (non-detect (marker "<") (treat-as report-limit))))
   (define-values (finals prov rej)
     (run-pipeline pd (list (rec 'id "r1" 'value "5"))))
   (check-equal? (hash-ref (car finals) 'value) "5")

@@ -65,7 +65,7 @@ def test_malformed_json_on_success_exit_persists_failed_run():
 
 @pytest.mark.django_db
 def test_unexpected_schema_version_persists_failed_run():
-    body = json.dumps({"schema_version": 2, "results": [], "provenance": [], "rejections": []})
+    body = json.dumps({"schema_version": 4, "results": [], "provenance": [], "rejections": []})
     with patch("apps.validation.services.subprocess.run", return_value=completed(0, stdout=body)):
         with pytest.raises(EngineError) as exc_info:
             run_validation(permit_slug=PERMIT_SLUG, pipeline_slug=PIPELINE_SLUG, records=RECORDS)
@@ -73,14 +73,14 @@ def test_unexpected_schema_version_persists_failed_run():
     assert exc_info.value.code == "unexpected-schema-version"
     run = ValidationRun.objects.get()
     assert run.status == "failed"
-    assert run.schema_version == 2
+    assert run.schema_version == 4
     assert counts() == (1, 0, 0, 0)
 
 
 @pytest.mark.django_db
 def test_successful_run_persists_results_exactly_as_returned():
     body = json.dumps({
-        "schema_version": 1,
+        "schema_version": 3,
         "results": [{
             "outfall": 1, "parameter": "TSS", "clause": "monthly-avg",
             "sample_ids": ["r1"], "sample_values": ["55/2"],

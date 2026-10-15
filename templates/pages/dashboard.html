@@ -1,24 +1,53 @@
-{% extends "app_base.html" %}{% block app_content %}
-<div class="page-header"><div><p class="eyebrow">Your organization</p><h1>Compliance Workspace</h1><p>AI-powered compliance monitoring and management</p></div><button class="button button-primary" data-modal-open="report-modal"><svg><use href="#i-chart"/></svg>Generate Report</button></div>
-<section class="metric-grid four">
-  <article class="card metric-card score-card"><div><span class="metric-icon blue"><svg><use href="#i-chart"/></svg></span><p>Compliance Readiness Score</p><div class="metric-value">— <small>/ 100</small></div><span class="badge neutral">No data yet</span></div><div class="donut" style="--value:0"><span>—</span></div></article>
-  <article class="card metric-card"><span class="metric-icon green"><svg><use href="#i-check"/></svg></span><p>Complete</p><div class="metric-value">0</div><small>requirements</small></article>
-  <article class="card metric-card"><span class="metric-icon red"><svg><use href="#i-alert"/></svg></span><p>Missing</p><div class="metric-value">0</div><small>requirements</small></article>
-  <article class="card metric-card"><span class="metric-icon amber"><svg><use href="#i-clock"/></svg></span><p>At Risk</p><div class="metric-value">0</div><small>requirements</small></article>
-</section>
-<div class="dashboard-grid">
-  <section class="card span-2"><div class="card-header"><div><h2>Requirements Progress</h2><p>Progress across active compliance frameworks</p></div><button class="text-button">View all →</button></div><div class="progress-list">
-    <p class="muted">No frameworks configured yet.</p>
-  </div></section>
-  <section class="card"><div class="card-header"><div><h2>Upcoming Deadlines</h2><p>Next 30 days</p></div><button class="icon-button">•••</button></div><div class="deadline-list">
-    <p class="muted">No upcoming deadlines.</p>
-  </div></section>
-  <section class="card span-2"><div class="card-header"><div><h2>Recent Evidence Activity</h2><p>Latest uploads and review activity</p></div><a href="{% url 'evidence' %}" class="text-button">View evidence →</a></div><div class="activity-list">
-    <p class="muted">No evidence has been uploaded yet.</p>
-  </div></section>
-  <section class="card"><div class="card-header"><div><h2>Needs Attention</h2><p>Prioritize these items</p></div></div><div class="attention-list">
-    <p class="muted">Nothing needs attention right now.</p>
-  </div></section>
+{% extends "app_base.html" %}
+{% block app_content %}
+<div class="page-header dashboard-heading">
+  <div><h1>Compliance Workspace</h1><p>AI-powered compliance monitoring and management</p></div>
+  <button class="button button-primary report-button" data-modal-open="report-modal"><svg><use href="#i-report"/></svg><span>Generate Report</span><svg class="button-chevron"><use href="#i-chevron-down"/></svg></button>
 </div>
-<div class="modal" id="report-modal" role="dialog" aria-modal="true" aria-labelledby="quick-report-title"><div class="modal-card"><button class="modal-close" data-modal-close aria-label="Close">×</button><span class="metric-icon blue"><svg><use href="#i-chart"/></svg></span><h2 id="quick-report-title">Generate compliance report</h2><p>Choose a starting point. You can customize sections before export.</p><label>Report type<select><option>Executive Summary</option><option>Framework Gap Analysis</option><option>Audit Package</option></select></label><div class="modal-actions"><button class="button button-secondary" data-modal-close>Cancel</button><a class="button button-primary" href="{% url 'reports' %}">Continue to builder</a></div></div></div>
+
+<section class="dashboard-metrics" aria-label="Compliance summary">
+  <article class="card readiness-card">
+    <div class="readiness-title"><h2>Compliance Readiness Score</h2><button class="info-button" aria-label="About compliance readiness"><svg><use href="#i-info"/></svg></button></div>
+    <div class="readiness-body">
+      <div class="dashboard-ring" style="--value:0"><span><strong>—</strong><small>/100</small></span></div>
+      <div class="readiness-status"><span class="status-dot neutral"></span><strong>Not calculated</strong><p>Add compliance requirements to calculate readiness.</p></div>
+    </div>
+    <div class="readiness-footer"><span class="muted">No historical score available</span><a href="{% url 'requirements' %}">View score details <span>→</span></a></div>
+  </article>
+
+  <article class="card summary-card"><span class="summary-icon green"><svg><use href="#i-check"/></svg></span><div><strong class="summary-value">0</strong><h2>Complete</h2><p>Requirements met</p></div><small>No requirements recorded</small></article>
+  <article class="card summary-card"><span class="summary-icon amber"><svg><use href="#i-minus"/></svg></span><div><strong class="summary-value">0</strong><h2>Missing</h2><p>Requirements not met</p></div><small>No requirements recorded</small></article>
+  <article class="card summary-card"><span class="summary-icon red"><svg><use href="#i-alert"/></svg></span><div><strong class="summary-value">0</strong><h2>At Risk</h2><p>Requires attention</p></div><small>No requirements recorded</small></article>
+</section>
+
+<div class="dashboard-sections">
+  <section class="card dashboard-panel progress-panel">
+    <div class="dashboard-card-header">
+      <div class="dashboard-card-title"><h2>Requirements Progress</h2><button class="info-button" aria-label="About requirements progress"><svg><use href="#i-info"/></svg></button></div>
+      <label class="framework-filter"><span class="sr-only">Filter frameworks</span><select disabled><option>All Frameworks</option></select></label>
+    </div>
+    <div class="progress-legend" aria-label="Progress legend"><span class="complete"><i></i>Complete</span><span class="in-progress"><i></i>In Progress</span><span class="missing"><i></i>Missing</span><span class="not-applicable"><i></i>Not Applicable</span></div>
+    <div class="dashboard-empty compact"><span class="empty-icon"><svg><use href="#i-list"/></svg></span><h3>No frameworks configured</h3><p>Framework progress will appear here once requirements are added.</p><a href="{% url 'requirements' %}">Go to requirements</a></div>
+    <div class="panel-footer"><a href="{% url 'requirements' %}">View all requirements <span>→</span></a></div>
+  </section>
+
+  <section class="card dashboard-panel deadline-panel">
+    <div class="dashboard-card-header"><div class="dashboard-card-title"><h2>Upcoming Deadlines</h2><button class="info-button" aria-label="About upcoming deadlines"><svg><use href="#i-info"/></svg></button></div></div>
+    <div class="dashboard-empty compact"><span class="empty-icon amber"><svg><use href="#i-calendar"/></svg></span><h3>No upcoming deadlines</h3><p>Scheduled compliance deadlines will appear here.</p></div>
+  </section>
+
+  <section class="card dashboard-panel evidence-panel">
+    <div class="dashboard-card-header"><div class="dashboard-card-title"><h2>Recent Evidence Activity</h2><button class="info-button" aria-label="About evidence activity"><svg><use href="#i-info"/></svg></button></div><a href="{% url 'evidence' %}">View all evidence <span>→</span></a></div>
+    <div class="dashboard-empty"><span class="empty-icon blue"><svg><use href="#i-file"/></svg></span><h3>No evidence activity</h3><p>Uploaded and reviewed evidence will be listed here.</p><a href="{% url 'evidence' %}">Manage evidence</a></div>
+  </section>
+
+  <section class="card dashboard-panel attention-panel">
+    <div class="dashboard-card-header"><div class="dashboard-card-title"><h2>Needs Attention</h2><button class="info-button" aria-label="About items needing attention"><svg><use href="#i-info"/></svg></button></div></div>
+    <div class="dashboard-empty"><span class="empty-icon green"><svg><use href="#i-shield-check"/></svg></span><h3>Nothing needs attention</h3><p>Compliance risks and overdue items will appear here.</p></div>
+  </section>
+</div>
+
+<div class="modal" id="report-modal" role="dialog" aria-modal="true" aria-labelledby="quick-report-title">
+  <div class="modal-card"><button class="modal-close" data-modal-close aria-label="Close">×</button><span class="metric-icon blue"><svg><use href="#i-report"/></svg></span><h2 id="quick-report-title">Generate compliance report</h2><p>Choose a starting point. You can customize sections before export.</p><label>Report type<select><option>Executive Summary</option><option>Framework Gap Analysis</option><option>Audit Package</option></select></label><div class="modal-actions"><button class="button button-secondary" data-modal-close>Cancel</button><a class="button button-primary" href="{% url 'reports' %}">Continue to builder</a></div></div>
+</div>
 {% endblock %}

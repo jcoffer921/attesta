@@ -1,0 +1,334 @@
+{
+  "metadata": {
+    "skill_name": "npdes-dmr-compliance",
+    "skill_path": ".claude/skills/npdes-dmr-compliance",
+    "executor_model": "claude-sonnet-5-5",
+    "analyzer_model": "claude-sonnet-5-5",
+    "timestamp": "2026-10-15T00:00:00Z",
+    "evals_run": [
+      1,
+      2,
+      3
+    ],
+    "runs_per_configuration": 1
+  },
+  "runs": [
+    {
+      "eval_id": 1,
+      "eval_name": "nd-copper",
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 5,
+        "failed": 0,
+        "total": 5,
+        "time_seconds": 20.7,
+        "tokens": 50519,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "States it is not simply a violation (and not a clean pass): compliance cannot be demonstrated or refuted from the result",
+          "passed": true,
+          "evidence": "Not a confirmed violation and not a pass; QL 5 > limit 3, inconclusive"
+        },
+        {
+          "text": "Says the value is reported as <5 (the quantitation/reporting limit), not as 0, ND, or No Discharge",
+          "passed": true,
+          "evidence": "Report <5; not 0, ND or NODI C"
+        },
+        {
+          "text": "Notes the reporting limit (5) is above the permit limit (3), i.e. the method is not sensitive enough, and recommends review/consulting the permit or DEP",
+          "passed": true,
+          "evidence": "QL above limit; check permit Part C, lower QL, ask DEP"
+        },
+        {
+          "text": "Does not claim a specific penalty or enforcement outcome",
+          "passed": true,
+          "evidence": "No penalty claim"
+        },
+        {
+          "text": "Does not conclude the result is compliant without first checking the permit's required method/quantitation limit",
+          "passed": true,
+          "evidence": "Tells user to check the permit Part C required QL before concluding"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 1,
+      "eval_name": "nd-copper",
+      "configuration": "without_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 5,
+        "failed": 0,
+        "total": 5,
+        "time_seconds": 12.8,
+        "tokens": 39961,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "States it is not simply a violation (and not a clean pass): compliance cannot be demonstrated or refuted from the result",
+          "passed": true,
+          "evidence": "Not a confirmed violation; inconclusive"
+        },
+        {
+          "text": "Says the value is reported as <5 (the quantitation/reporting limit), not as 0, ND, or No Discharge",
+          "passed": true,
+          "evidence": "Report <5 with qualifier, not 0 or a number"
+        },
+        {
+          "text": "Notes the reporting limit (5) is above the permit limit (3), i.e. the method is not sensitive enough, and recommends review/consulting the permit or DEP",
+          "passed": true,
+          "evidence": "QL above limit; ask lab for lower-QL method, check permit"
+        },
+        {
+          "text": "Does not claim a specific penalty or enforcement outcome",
+          "passed": true,
+          "evidence": "No penalty claim"
+        },
+        {
+          "text": "Does not conclude the result is compliant without first checking the permit's required method/quantitation limit",
+          "passed": true,
+          "evidence": "Conditions \"counts as in compliance\" on the permit listing a QL the lab met. Also says non-detects are \"generally treated as zero\" in averages, which conflicts with PA (use the reporting limit)"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 2,
+      "eval_name": "nodi-missed-sample",
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 5,
+        "failed": 0,
+        "total": 5,
+        "time_seconds": 26.4,
+        "tokens": 51946,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Identifies PA NODI code E (missed sample / analysis not conducted) for the missing sample",
+          "passed": true,
+          "evidence": "PA NODI code E"
+        },
+        {
+          "text": "States that using E results in a reporting violation",
+          "passed": true,
+          "evidence": "E is itself a violation; sample-frequency violation"
+        },
+        {
+          "text": "Mentions an explanatory comment and/or the Non-Compliance Reporting Form (3800-FM-BCW0440)",
+          "passed": true,
+          "evidence": "Comment plus Form 3800-FM-BCW0440"
+        },
+        {
+          "text": "Says not to use No Discharge (C) because the facility did discharge",
+          "passed": true,
+          "evidence": "Not No Discharge"
+        },
+        {
+          "text": "Still reports the one sample that was taken",
+          "passed": true,
+          "evidence": "Reports the collected sample"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 2,
+      "eval_name": "nodi-missed-sample",
+      "configuration": "without_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.6,
+        "passed": 3,
+        "failed": 2,
+        "total": 5,
+        "time_seconds": 20.4,
+        "tokens": 45315,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Identifies PA NODI code E (missed sample / analysis not conducted) for the missing sample",
+          "passed": false,
+          "evidence": "Suggests Q for zero-sample case; never identifies E"
+        },
+        {
+          "text": "States that using E results in a reporting violation",
+          "passed": false,
+          "evidence": "Calls it a monitoring-frequency violation but not tied to code E"
+        },
+        {
+          "text": "Mentions an explanatory comment and/or the Non-Compliance Reporting Form (3800-FM-BCW0440)",
+          "passed": true,
+          "evidence": "Explanatory comment about autosampler failure (form not named)"
+        },
+        {
+          "text": "Says not to use No Discharge (C) because the facility did discharge",
+          "passed": true,
+          "evidence": "Says no NODI code should cover a sample that was collected; No Discharge not applicable"
+        },
+        {
+          "text": "Still reports the one sample that was taken",
+          "passed": true,
+          "evidence": "Reports the one valid sample"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 3,
+      "eval_name": "snc-copper-late",
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 5,
+        "failed": 0,
+        "total": 5,
+        "time_seconds": 25.9,
+        "tokens": 49373,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Classifies copper as a Group II pollutant (toxic metal) with a technical review criterion of 1.2x the limit (20% over)",
+          "passed": true,
+          "evidence": "Copper is a metal, Group II (1.2x); notes group should be confirmed"
+        },
+        {
+          "text": "Concludes 25% over in 2 of 6 months MEETS the TRC, so the effluent criterion for SNC is met",
+          "passed": true,
+          "evidence": "1.25x in 2 of 6 months meets TRC (\"probable TRC SNC\", conditional on Group II)"
+        },
+        {
+          "text": "Notes the chronic criterion (4 of 6 months) is not met by two months",
+          "passed": true,
+          "evidence": "Chronic needs 4 of 6; 2 does not meet"
+        },
+        {
+          "text": "Says the DMR filed 45 days late is a reporting violation that can independently count toward SNC (30+ days late)",
+          "passed": true,
+          "evidence": "45-day-late DMR is a reporting violation counting toward SNC (flags 30-day as [G])"
+        },
+        {
+          "text": "States that SNC status is assigned by EPA/the state and the permittee's own reading is indicative",
+          "passed": true,
+          "evidence": "SNC assigned by EPA/state; assessment indicative"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 3,
+      "eval_name": "snc-copper-late",
+      "configuration": "without_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.8,
+        "passed": 4,
+        "failed": 1,
+        "total": 5,
+        "time_seconds": 26.9,
+        "tokens": 46338,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Classifies copper as a Group II pollutant (toxic metal) with a technical review criterion of 1.2x the limit (20% over)",
+          "passed": true,
+          "evidence": "Metal, Group II, TRC 1.2 (20% over)"
+        },
+        {
+          "text": "Concludes 25% over in 2 of 6 months MEETS the TRC, so the effluent criterion for SNC is met",
+          "passed": true,
+          "evidence": "Concludes TRC met, but via an invented \"33% of measurements\" test rather than 2+ months in 6"
+        },
+        {
+          "text": "Notes the chronic criterion (4 of 6 months) is not met by two months",
+          "passed": true,
+          "evidence": "Chronic 4 of 6 not met"
+        },
+        {
+          "text": "Says the DMR filed 45 days late is a reporting violation that can independently count toward SNC (30+ days late)",
+          "passed": true,
+          "evidence": "DMR 30+ days late counts; 45 qualifies"
+        },
+        {
+          "text": "States that SNC status is assigned by EPA/the state and the permittee's own reading is indicative",
+          "passed": false,
+          "evidence": "Does not say SNC is assigned by EPA/state or that the permittee reading is indicative; only \"verify against current text\""
+        }
+      ],
+      "notes": []
+    }
+  ],
+  "run_summary": {
+    "with_skill": {
+      "pass_rate": {
+        "mean": 1.0,
+        "stddev": 0.0,
+        "min": 1.0,
+        "max": 1.0
+      },
+      "time_seconds": {
+        "mean": 24.333,
+        "stddev": 2.577,
+        "min": 20.7,
+        "max": 26.4
+      },
+      "tokens": {
+        "mean": 50612.667,
+        "stddev": 1052.509,
+        "min": 49373,
+        "max": 51946
+      }
+    },
+    "without_skill": {
+      "pass_rate": {
+        "mean": 0.8,
+        "stddev": 0.163,
+        "min": 0.6,
+        "max": 1.0
+      },
+      "time_seconds": {
+        "mean": 20.033,
+        "stddev": 5.762,
+        "min": 12.8,
+        "max": 26.9
+      },
+      "tokens": {
+        "mean": 43871.333,
+        "stddev": 2796.386,
+        "min": 39961,
+        "max": 46338
+      }
+    },
+    "delta": {
+      "pass_rate": "+0.20",
+      "time_seconds": "+4.30",
+      "tokens": "+6741.33"
+    }
+  },
+  "notes": [
+    "snc-copper-late: both reach \"SNC likely\", but the baseline used an invented \"33% of measurements\" test and never said SNC is assigned by EPA/state; the skill followed the verified 2-of-6-months TRC criteria.",
+    "nodi-missed-sample again discriminates: baseline suggests code Q and never names E.",
+    "nd-copper passes 5/5 in both; baseline also says non-detects are \"generally treated as zero\" in averages, which conflicts with PA (reporting limit) - not covered by an assertion, add one.",
+    "snc-copper-late with-skill hedges on copper being Group II because the skill lists Group I/II only by example; adding a short Group II list to references would remove the hedge."
+  ]
+}

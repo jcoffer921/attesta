@@ -1,6 +1,7 @@
 from collections import defaultdict
 from fractions import Fraction
 
+from django.contrib.auth.decorators import login_required
 from django.http import Http404
 from django.shortcuts import get_object_or_404, render
 
@@ -12,6 +13,8 @@ from apps.validation.services import EngineError, InvalidSlugError, describe_per
 STATUS_BADGE_CLASSES = {
     "pass": "badge success",
     "exceedance": "badge danger",
+    "review-required": "badge warning",
+    "under-sampled": "badge warning",
     "missing-data": "badge warning",
     "unit-error": "badge unit-error",
     "report-only": "badge info",
@@ -22,6 +25,7 @@ def badge_class_for(status):
     return STATUS_BADGE_CLASSES.get(status, "badge neutral")
 
 
+@login_required(login_url='login')
 def permit_rules(request, permit_slug):
     """Renders a permit's limits from the engine's `describe` JSON only.
 
@@ -113,6 +117,7 @@ def _monthly_avg_chart_series(run, results):
     return series
 
 
+@login_required(login_url='login')
 def validation_results(request, run_id):
     """One row per limit result, status badge from the stored engine status
     only, and the full trace shown expanded by default (not hidden behind
@@ -141,6 +146,7 @@ def validation_results(request, run_id):
     )
 
 
+@login_required(login_url='login')
 def provenance_timeline(request, run_id):
     """Ordered pipeline steps per record, with any rejection appended at the
     point the record stopped progressing -- never silently dropped from the

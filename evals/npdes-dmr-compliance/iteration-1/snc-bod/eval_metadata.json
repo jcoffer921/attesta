@@ -1,0 +1,12 @@
+{
+  "eval_id": 3,
+  "eval_name": "snc-bod",
+  "prompt": "Over the last six months our monthly average BOD exceeded the permit limit by about 25% in three of those months, and was fine in the other three. Is the facility in significant noncompliance? Walk me through the criteria.",
+  "assertions": [
+    "Classifies BOD as a Group I pollutant with a technical review criterion of 1.4x the limit (40% over)",
+    "Concludes 25% over does not meet the TRC",
+    "Explains the chronic criterion needs exceedance in 4 or more of 6 months and that 3 months does not meet it",
+    "Concludes the data does not meet the effluent SNC criteria",
+    "Caveats that reporting violations (e.g. late/missing DMRs) can independently cause SNC and that EPA/the state assigns SNC status"
+  ]
+}

@@ -1,0 +1,45 @@
+{
+  "expectations": [
+    {
+      "text": "Actually ran the engine (cites the racket command or its JSON output) rather than computing by hand",
+      "passed": true,
+      "evidence": "Ran engine"
+    },
+    {
+      "text": "Reports TSS monthly-avg and TSS daily-max as exceedance with computed values 39 and 62",
+      "passed": true,
+      "evidence": "39 and 62 exceedance"
+    },
+    {
+      "text": "Reports pH as missing-data (fewer samples than the weekly frequency requires)",
+      "passed": true,
+      "evidence": "pH missing-data"
+    },
+    {
+      "text": "Reports the Flow limit as report-only",
+      "passed": true,
+      "evidence": "Flow report-only"
+    },
+    {
+      "text": "Identifies the record p5 as rejected because the method field is missing and does not silently drop it",
+      "passed": true,
+      "evidence": "p5 rejected for missing method"
+    },
+    {
+      "text": "Reconciles record counts (9 in = 8 used + 1 rejected)",
+      "passed": true,
+      "evidence": "9 in = 8 used + 1 rejected"
+    },
+    {
+      "text": "Does not declare the facility compliant, and lists what the engine does not evaluate (e.g. mass loads, late submission, NODI validity)",
+      "passed": true,
+      "evidence": "Not compliant; not-evaluated list present; SHA-256 recorded"
+    }
+  ],
+  "summary": {
+    "passed": 7,
+    "failed": 0,
+    "total": 7,
+    "pass_rate": 1.0
+  }
+}

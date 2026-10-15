@@ -5,7 +5,7 @@ human approval: a deterministic rule engine decides whether monitoring data
 complies with a permit, and every decision carries a full evidence trail —
 which samples were used, what was computed, and why.
 
-**Core principle: the rule engine decides, AI only explains.** Gemini is
+**Core principle: the rule engine decides, AI only explains.** Claude is
 used solely to produce plain-language explanations of results that have
 already been computed and stored; it never determines or alters a status. A
 human approves before any report leaves the system.
@@ -40,7 +40,7 @@ Python/Racket FFI, no shared memory, easy to test independently:
    row with the classified error, and no partial child rows.
 
 3. **Explanation layer** (`apps/ai_assist/services.py`) — reads an
-   already-persisted `LimitResult` and asks Gemini for a one- or
+   already-persisted `LimitResult` and asks Claude for a one- or
    two-sentence plain-language explanation, written to its own
    `gemini_explanation` field via a targeted update. It never touches
    `status` or any other engine-owned field.
@@ -74,7 +74,7 @@ Relevant settings (`config/settings.py`, overridable via `.env`):
 | `RACKET_EXECUTABLE` | `racket` | Executable used to invoke the rule engine |
 | `RACKET_TIMEOUT_SECONDS` | `30` | Hard timeout on every engine subprocess call |
 | `DSL_ROOT` | `BASE_DIR / "dsl"` | Root the service layer resolves permit/pipeline slugs under |
-| `GEMINI_API_KEY` | `""` | Required for `apps.ai_assist.services.explain_result` |
+| `ANTHROPIC_API_KEY` | `""` | Required for evidence review and `apps.ai_assist.services.explain_result` |
 
 ## Running in production
 
@@ -92,7 +92,7 @@ shorter than the engine's own would SIGKILL the worker before
 response. See the comments in `gunicorn.conf.py` for the full reasoning and
 the `GUNICORN_WORKERS`/`GUNICORN_THREADS`/`GUNICORN_TIMEOUT` env overrides.
 
-The Gemini explanation step (`apps.ai_assist.services.explain_result`) is
+The Claude explanation step (`apps.ai_assist.services.explain_result`) is
 always a separate call from `run_validation`, made only after a run has
 already committed — a slow or failing explanation can't delay or corrupt a
 stored validation result.

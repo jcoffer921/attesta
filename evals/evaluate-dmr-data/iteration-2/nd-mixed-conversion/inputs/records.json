@@ -1,0 +1,9 @@
+{
+  "schema_version": 3,
+  "records": [
+    {"id": "m1", "outfall": 1, "Analyte": "TSS", "value": "<10", "unit": "mg/L", "sample_date": "2026-10-04", "method": "SM2540D"},
+    {"id": "m2", "outfall": 1, "Analyte": "TSS", "value": "40", "unit": "mg/L", "sample_date": "2026-10-11", "method": "SM2540D"},
+    {"id": "m3", "outfall": 1, "Analyte": "TSS", "value": "65", "unit": "mg/L", "sample_date": "2026-10-18", "method": "SM2540D"},
+    {"id": "m4", "outfall": 1, "Analyte": "TSS", "value": "12000", "unit": "ug/L", "sample_date": "2026-10-25", "method": "SM2540D"}
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "schema_version": 3,
+  "records": [
+    {"id": "r1", "outfall": 1, "Analyte": "TSS", "value": "20", "unit": "mg/L", "sample_date": "2026-10-02", "method": "SM2540D"},
+    {"id": "r2", "outfall": 1, "Analyte": "TSS", "value": "35", "unit": "mg/L", "sample_date": "2026-10-09", "method": "SM2540D"},
+    {"id": "r3", "outfall": 1, "Analyte": "TSS", "value": "62", "unit": "mg/L", "sample_date": "2026-10-16", "method": "SM2540D"},
+    {"id": "p1", "outfall": 1, "Analyte": "pH", "value": "7.1", "unit": "s.u.", "sample_date": "2026-10-01", "method": "SM4500H"},
+    {"id": "p2", "outfall": 1, "Analyte": "pH", "value": "7.2", "unit": "s.u.", "sample_date": "2026-10-08", "method": "SM4500H"},
+    {"id": "p3", "outfall": 1, "Analyte": "pH", "value": "6.9", "unit": "s.u.", "sample_date": "2026-10-15", "method": "SM4500H"},
+    {"id": "p4", "outfall": 1, "Analyte": "pH", "value": "7.0", "unit": "s.u.", "sample_date": "2026-10-22", "method": "SM4500H"},
+    {"id": "p5", "outfall": 1, "Analyte": "pH", "value": "7.3", "unit": "s.u.", "sample_date": "2026-10-29"},
+    {"id": "f1", "outfall": 1, "Analyte": "Flow", "value": "0.4", "unit": "MGD", "sample_date": "2026-10-10", "method": "METER"}
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "eval_id": 3,
+  "eval_name": "snc-copper-late",
+  "assertions": [
+    "Classifies copper as a Group II pollutant (toxic metal) with a technical review criterion of 1.2x the limit (20% over)",
+    "Concludes 25% over in 2 of 6 months MEETS the TRC, so the effluent criterion for SNC is met",
+    "Notes the chronic criterion (4 of 6 months) is not met by two months",
+    "Says the DMR filed 45 days late is a reporting violation that can independently count toward SNC (30+ days late)",
+    "States that SNC status is assigned by EPA/the state and the permittee's own reading is indicative"
+  ]
+}

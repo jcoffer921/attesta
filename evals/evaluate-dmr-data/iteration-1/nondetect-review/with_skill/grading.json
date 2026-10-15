@@ -1,0 +1,35 @@
+{
+  "expectations": [
+    {
+      "text": "Actually ran the engine rather than computing by hand",
+      "passed": true,
+      "evidence": "Ran the engine"
+    },
+    {
+      "text": "Reports TSS monthly-avg with a '<'-qualified computed value (<45)",
+      "passed": true,
+      "evidence": "<45 qualified"
+    },
+    {
+      "text": "Reports the TSS statuses as review-required, not exceedance and not pass",
+      "passed": true,
+      "evidence": "review-required"
+    },
+    {
+      "text": "Explains that the reporting limit (80) is above the permit limit so compliance can be neither shown nor refuted",
+      "passed": true,
+      "evidence": "QL 80 > limits 60/30"
+    },
+    {
+      "text": "Escalates to a human decision / suggests rerunning with a more sensitive method rather than concluding pass or fail",
+      "passed": true,
+      "evidence": "Escalates to human; confirm QL / supply data"
+    }
+  ],
+  "summary": {
+    "passed": 5,
+    "failed": 0,
+    "total": 5,
+    "pass_rate": 1.0
+  }
+}

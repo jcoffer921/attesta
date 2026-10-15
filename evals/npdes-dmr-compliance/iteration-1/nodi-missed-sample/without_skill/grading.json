@@ -1,0 +1,35 @@
+{
+  "expectations": [
+    {
+      "text": "Identifies PA NODI code E (missed sample / analysis not conducted) for the missing sample",
+      "passed": false,
+      "evidence": "Says no NODI code fits the missed sample; never identifies E"
+    },
+    {
+      "text": "States that using E results in a reporting violation",
+      "passed": false,
+      "evidence": "Calls it a probable monitoring violation but not tied to code E; hedged \"probably\""
+    },
+    {
+      "text": "Mentions an explanatory comment and/or the Non-Compliance Reporting Form (3800-FM-BCW0440)",
+      "passed": true,
+      "evidence": "Regraded: assertion says \"comment and/or the form\"; baseline recommends an explanatory comment (form not named)"
+    },
+    {
+      "text": "Says not to use No Discharge (C) because the facility did discharge",
+      "passed": true,
+      "evidence": "Lists C (no discharge) as not applicable"
+    },
+    {
+      "text": "Still reports the one sample that was taken",
+      "passed": true,
+      "evidence": "Reports the one sample taken"
+    }
+  ],
+  "summary": {
+    "passed": 3,
+    "failed": 2,
+    "total": 5,
+    "pass_rate": 0.6
+  }
+}

@@ -1,0 +1,34 @@
+{
+  "skill_name": "evaluate-dmr-data",
+  "evals": [
+    {
+      "id": 1,
+      "name": "october-mixed",
+      "prompt": "Run the October 2026 samples in evals/evaluate-dmr-data/iteration-2/october-mixed/inputs/records.json through the Attesta engine against permit pa0000000 (pipeline lab-csv-import, period 2026-10) and tell me whether we're compliant. Racket is at C:\\Program Files\\Racket. Save your written analysis to the outputs folder as analysis.md.",
+      "expected_output": "TSS monthly-avg and daily-max exceedance; pH evaluated on 4 accepted samples (pass) with a separate sample-frequency row under-sampled (4 of 5 required); Flow report-only; one rejection (missing method). Not 'compliant'; lists not-evaluated items; reconciles 9 records in = 8 used + 1 rejected.",
+      "assertions": [
+        "Actually ran the engine (cites the racket command or its JSON output) rather than computing by hand",
+        "Reports TSS monthly-avg and TSS daily-max as exceedance with computed values 39 and 62",
+        "Reports pH as pass on the 4 accepted samples AND a separate sample-frequency finding (under-sampled, 4 of 5 required), not as a clean pass or as missing-data",
+        "Reports the Flow limit as report-only",
+        "Identifies the record p5 as rejected because the method field is missing and does not silently drop it",
+        "Reconciles record counts (9 in = 8 used + 1 rejected)",
+        "Does not declare the facility compliant, and lists what the engine does not evaluate (e.g. mass loads, late submission, NODI validity)"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "nd-mixed-conversion",
+      "prompt": "Evaluate evals/evaluate-dmr-data/iteration-2/nd-mixed-conversion/inputs/records.json against pa0000000 for 2026-10 with pipeline lab-csv-import (Racket is at C:\\Program Files\\Racket). One TSS result was a non-detect and one came back from the lab in ug/L. Walk me through what passed and what didn't, and what I need to do next. Save your analysis to the outputs folder as analysis.md.",
+      "expected_output": "After converting m4 (12000 ug/L -> 12 mg/L): TSS daily-max 65 is an exceedance from a detected value (m3) even though a non-detect exists; TSS monthly-avg <127/4 (31.75) is review-required because with the non-detect at zero it would be 29.25 (<30). Different statuses for the two clauses; not both exceedance.",
+      "assertions": [
+        "Actually ran the engine rather than computing by hand",
+        "Reports TSS daily-max as exceedance with computed value 65, attributed to the detected sample m3 (not to the non-detect)",
+        "Reports TSS monthly-avg as review-required with a '<'-qualified value (<127/4, i.e. 31.75), NOT as exceedance",
+        "Explains why the two clauses differ: the average exceeds 30 only because the non-detect is counted at its reporting limit (29.25 with it at zero), while the daily max is driven by a detected value",
+        "Notes sample m4 was converted from ug/L to mg/L (12000 ug/L = 12 mg/L) via the pipeline",
+        "Recommends concrete next steps (human review of the average, confirm the reporting limit/method, address the detected daily-max exceedance and notification duties)"
+      ]
+    }
+  ]
+}

@@ -23,3 +23,6 @@ media/
 
 # pytest
 .pytest_cache/
+
+# Personal tracking (not part of graded submission)
+SUBMISSION_CHECKLIST.md

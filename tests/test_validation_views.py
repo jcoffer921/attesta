@@ -31,13 +31,13 @@ def make_result(run, **overrides):
 # --- validation_results: badges and trace values ---
 
 @pytest.mark.django_db
-def test_exceedance_row_displays_its_trace_values_correctly(client):
+def test_exceedance_row_displays_its_trace_values_correctly(org_client):
     run = make_run()
     make_result(run, status="exceedance", parameter="TSS", clause="daily-max",
                 sample_ids=["r1", "r2"], sample_values=["65", "70"],
                 computed_value="70", threshold="60", reason="daily-max exceeds the permit limit (computed 70).")
 
-    response = client.get(reverse("validation_results", args=[run.pk]))
+    response = org_client.get(reverse("validation_results", args=[run.pk]))
 
     assert response.status_code == 200
     content = response.content.decode()
@@ -52,15 +52,17 @@ def test_exceedance_row_displays_its_trace_values_correctly(client):
 @pytest.mark.parametrize("status,expected_class", [
     ("pass", "badge success"),
     ("exceedance", "badge danger"),
+    ("review-required", "badge warning"),
+    ("under-sampled", "badge warning"),
     ("missing-data", "badge warning"),
     ("unit-error", "badge unit-error"),
     ("report-only", "badge info"),
 ])
-def test_each_status_renders_its_own_badge_class(client, status, expected_class):
+def test_each_status_renders_its_own_badge_class(org_client, status, expected_class):
     run = make_run()
     make_result(run, status=status, parameter=status.upper())
 
-    response = client.get(reverse("validation_results", args=[run.pk]))
+    response = org_client.get(reverse("validation_results", args=[run.pk]))
     content = response.content.decode()
 
     assert f'data-status="{status}"' in content
@@ -70,11 +72,11 @@ def test_each_status_renders_its_own_badge_class(client, status, expected_class)
 
 
 @pytest.mark.django_db
-def test_failed_run_shows_error_state_not_a_blank_page(client):
+def test_failed_run_shows_error_state_not_a_blank_page(org_client):
     run = make_run(status="failed", error_code="timeout",
                     error_message="racket did not exit within 30s")
 
-    response = client.get(reverse("validation_results", args=[run.pk]))
+    response = org_client.get(reverse("validation_results", args=[run.pk]))
     content = response.content.decode()
 
     assert response.status_code == 200
@@ -84,15 +86,15 @@ def test_failed_run_shows_error_state_not_a_blank_page(client):
 
 
 @pytest.mark.django_db
-def test_validation_results_unknown_run_is_404(client):
-    response = client.get(reverse("validation_results", args=[999999]))
+def test_validation_results_unknown_run_is_404(org_client):
+    response = org_client.get(reverse("validation_results", args=[999999]))
     assert response.status_code == 404
 
 
 # --- provenance_timeline ---
 
 @pytest.mark.django_db
-def test_rejected_record_appears_in_its_timeline_with_reason(client):
+def test_rejected_record_appears_in_its_timeline_with_reason(org_client):
     run = make_run()
     ProvenanceEntry.objects.create(run=run, step="map-column", record_id="bad1",
                                     before={"Analyte": "TSS"}, after={"parameter": "TSS"},
@@ -103,7 +105,7 @@ def test_rejected_record_appears_in_its_timeline_with_reason(client):
                                     before={"Analyte": "TSS"}, after={"parameter": "TSS"},
                                     note="renamed column Analyte to parameter")
 
-    response = client.get(reverse("provenance_timeline", args=[run.pk]))
+    response = org_client.get(reverse("provenance_timeline", args=[run.pk]))
     content = response.content.decode()
 
     assert response.status_code == 200
@@ -118,19 +120,19 @@ def test_rejected_record_appears_in_its_timeline_with_reason(client):
 # --- permit_rules: 404 vs 502 split ---
 
 @pytest.mark.django_db
-def test_unknown_permit_slug_is_404_and_never_calls_subprocess(client):
+def test_unknown_permit_slug_is_404_and_never_calls_subprocess(org_client):
     with patch("apps.validation.services.subprocess.run") as mock_run:
-        response = client.get(reverse("permit_rules", args=["not-a-real-permit"]))
+        response = org_client.get(reverse("permit_rules", args=["not-a-real-permit"]))
 
     assert response.status_code == 404
     mock_run.assert_not_called()
 
 
 @pytest.mark.django_db
-def test_engine_error_renders_error_state_with_5xx_status(client):
+def test_engine_error_renders_error_state_with_5xx_status(org_client):
     with patch("apps.validation.views.describe_permit",
                side_effect=EngineError("engine-crash", "/some/internal/path leaked here")):
-        response = client.get(reverse("permit_rules", args=[PERMIT_SLUG]))
+        response = org_client.get(reverse("permit_rules", args=[PERMIT_SLUG]))
 
     assert response.status_code == 502
     content = response.content.decode()
@@ -139,7 +141,7 @@ def test_engine_error_renders_error_state_with_5xx_status(client):
 
 
 @pytest.mark.django_db
-def test_permit_rules_happy_path_renders_describe_output(client):
+def test_permit_rules_happy_path_renders_describe_output(org_client):
     fake_permit = {
         "permit_id": "PA0000000",
         "outfalls": [{
@@ -151,7 +153,7 @@ def test_permit_rules_happy_path_renders_describe_output(client):
         }],
     }
     with patch("apps.validation.views.describe_permit", return_value=fake_permit):
-        response = client.get(reverse("permit_rules", args=[PERMIT_SLUG]))
+        response = org_client.get(reverse("permit_rules", args=[PERMIT_SLUG]))
 
     assert response.status_code == 200
     content = response.content.decode()

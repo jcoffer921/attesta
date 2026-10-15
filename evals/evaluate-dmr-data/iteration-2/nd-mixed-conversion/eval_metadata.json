@@ -1,0 +1,12 @@
+{
+  "eval_id": 2,
+  "eval_name": "nd-mixed-conversion",
+  "assertions": [
+    "Actually ran the engine rather than computing by hand",
+    "Reports TSS daily-max as exceedance with computed value 65, attributed to the detected sample m3 (not to the non-detect)",
+    "Reports TSS monthly-avg as review-required with a '<'-qualified value (<127/4, i.e. 31.75), NOT as exceedance",
+    "Explains why the two clauses differ: the average exceeds 30 only because the non-detect is counted at its reporting limit (29.25 with it at zero), while the daily max is driven by a detected value",
+    "Notes sample m4 was converted from ug/L to mg/L (12000 ug/L = 12 mg/L) via the pipeline",
+    "Recommends concrete next steps (human review of the average, confirm the reporting limit/method, address the detected daily-max exceedance and notification duties)"
+  ]
+}

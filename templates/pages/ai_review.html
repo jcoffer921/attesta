@@ -1,9 +1,203 @@
-{% extends "app_base.html" %}{% block app_content %}
-<div class="page-header"><div><p class="eyebrow">Intelligent evidence analysis</p><h1>AI Review</h1><p>AI-powered analysis of evidence against requirements</p></div><button class="button button-secondary">Choose Document⌄</button></div>
-<section class="card" style="padding:40px;text-align:center">
-  <span class="metric-icon purple" style="margin:0 auto 12px"><svg><use href="#i-spark"/></svg></span>
-  <h2>No document selected</h2>
-  <p class="muted">Choose a piece of evidence to run an AI analysis against its mapped requirements. Results will always require human verification before affecting evidence status.</p>
-</section>
-<div class="info-banner"><svg><use href="#i-spark"/></svg><p><b>AI analysis provides recommendations only.</b> Final verification and acceptance must be completed by a qualified human reviewer.</p></div>
+{% extends "app_base.html" %}
+{% load static %}
+{% block app_extra_head %}<link rel="stylesheet" href="{% static 'css/ai_review.css' %}">{% endblock %}
+{% block app_content %}
+<div class="page-header ai-page-heading">
+  <div><h1>AI Review</h1><p>AI-powered analysis of evidence against requirements</p></div>
+  <a class="button button-secondary" href="{% url 'evidence' %}"><span aria-hidden="true">←</span> Back to Evidence</a>
+</div>
+
+{% if just_uploaded %}<div class="review-notice success" role="status">Upload complete. Confirm the selected document and begin its review.</div>{% endif %}
+{% if just_started %}<div class="review-notice active" role="status">Review started successfully. This document is now in the human-review workflow.</div>{% endif %}
+{% if just_stopped %}<div class="review-notice stopped" role="status">Review stopped. The document remains saved and can be resumed at any time.</div>{% endif %}
+<form id="review-form" class="selected-evidence-bar card evidence-selector" method="post" data-review-start-form>
+  {% csrf_token %}
+  <span class="evidence-label">Selected Evidence</span>
+  <span class="evidence-divider"></span>
+  <span class="selected-file-icon"><svg><use href="#i-file"/></svg></span>
+  <label class="selected-file-copy" for="evidence-select">
+    <strong>{% if selected_evidence %}{{ selected_evidence.original_name }}{% else %}No document selected{% endif %}</strong>
+    <small>{% if selected_evidence %}{{ selected_evidence.extension }} · {{ selected_evidence.size|filesizeformat }} · {{ selected_evidence.get_review_status_display }}{% else %}Choose uploaded evidence to begin an AI-assisted review{% endif %}</small>
+  </label>
+  <select id="evidence-select" name="evidence_id" data-evidence-select required>
+    <option value="">Select uploaded evidence…</option>
+    {% for item in evidence_items %}<option value="{{ item.pk }}" {% if selected_evidence.pk == item.pk %}selected{% endif %}>{{ item.original_name }}</option>{% endfor %}
+  </select>
+  <span class="review-control-group">
+    <button class="button button-danger-outline" type="submit" name="action" value="stop" data-review-stop {% if selected_evidence.review_status != 'in_review' %}hidden{% endif %}>Stop Review</button>
+    <button class="button button-primary" type="submit" name="action" value="start" data-review-submit {% if not selected_evidence %}disabled{% endif %}>{% if selected_evidence.review_status == 'in_review' %}Restart Review{% elif selected_evidence.review_status == 'stopped' %}Resume Review{% else %}Begin Review{% endif %}</button>
+  </span>
+</form>
+
+{% if selected_evidence.review_status == 'error' %}<div class="review-notice error" role="alert" data-review-error>{{ selected_evidence.review_error|default:"The review could not be completed." }} Select Begin Review to try again.</div>{% else %}<div class="review-notice error" role="alert" data-review-error hidden></div>{% endif %}
+
+<div class="ai-review-layout" data-review-state="{% if selected_evidence.review_status == 'in_review' %}active{% else %}empty{% endif %}">
+  <div class="ai-review-column ai-review-left">
+    <section class="card review-card analysis-summary-card">
+      <div class="review-card-title"><h2>AI Analysis Summary</h2><span class="review-info" title="AI-generated overview"><svg><use href="#i-info"/></svg></span></div>
+      {% if review_result %}
+      <div class="empty-analysis result-summary">
+        <div class="empty-match-ring has-result" style="--match:{{ review_result.overall_match }}"><span>{{ review_result.overall_match }}%<small>Overall Match</small></span></div>
+        <div>
+          <h3>Analysis complete <span class="rec-pill rec-{{ review_result.recommendation }}">{% if review_result.recommendation == 'accept' %}Accept{% elif review_result.recommendation == 'reject' %}Reject{% else %}Needs follow-up{% endif %}</span></h3>
+          <p class="clamp-3">{{ review_result.summary }}</p>
+          <div class="result-chips">
+            <span class="chip good"><b>{{ review_result.key_criteria|length }}</b> criteria met</span>
+            <span class="chip warn"><b>{{ review_result.partial_matches|length }}</b> partial</span>
+            <span class="chip bad"><b>{{ review_result.potential_gaps|length }}</b> gaps</span>
+          </div>
+        </div>
+      </div>
+      <button class="review-footer-link drawer-link" type="button" data-open-drawer="overview">View full analysis <span>→</span></button>
+      {% else %}
+      <div class="empty-analysis">
+        <div class="empty-match-ring"><span>—<small>Overall Match</small></span></div>
+        <div><h3>{% if selected_evidence.review_status == 'in_review' %}Review in progress{% elif selected_evidence.review_status == 'error' %}Review failed{% else %}Analysis not started{% endif %}</h3><p>{% if selected_evidence.review_status == 'in_review' %}{{ selected_evidence.original_name }} has entered the AI-assisted, human-verified review workflow.{% else %}Select evidence to analyze its alignment with mapped compliance requirements.{% endif %}</p><div class="empty-status-lines"><span class="criteria"><svg><use href="#i-check"/></svg>Key criteria will appear here</span><span class="partial"><i></i>Partial matches will appear here</span><span class="gap"><svg><use href="#i-alert"/></svg>Potential gaps will appear here</span></div></div>
+      </div>
+      {% endif %}
+    </section>
+
+    <section class="card review-card requirement-match-card">
+      <div class="review-card-title"><h2>Likely Matching Requirements</h2><span class="review-info" title="Requirements related to the selected evidence"><svg><use href="#i-info"/></svg></span></div>
+      <div class="review-empty-row"><span class="empty-row-icon"><svg><use href="#i-list"/></svg></span><div><strong>No requirement matches</strong><p>Mapped requirements will appear after evidence analysis.</p></div></div>
+      <a class="review-footer-link disabled" aria-disabled="true">View requirement mapping <span>→</span></a>
+    </section>
+
+    <section class="card review-card statements-card">
+      <div class="review-card-title"><h2>Extracted Key Statements</h2><span class="review-info" title="Statements extracted from the selected evidence"><svg><use href="#i-info"/></svg></span></div>
+      {% if review_result.key_statements %}
+      <ul class="quick-list statements">{% for statement in review_result.key_statements|slice:":3" %}<li><span class="quick-text clamp-2">{{ statement.text }}</span><span class="conf-pill conf-{{ statement.confidence|lower }}">{{ statement.confidence }}</span></li>{% endfor %}</ul>
+      {% else %}
+      <div class="review-empty-row"><span class="empty-row-icon"><svg><use href="#i-file"/></svg></span><div><strong>No extracted statements</strong><p>Relevant statements and confidence levels will appear after analysis.</p></div></div>
+      {% endif %}
+      {% if review_result.key_statements %}<button class="review-footer-link drawer-link" type="button" data-open-drawer="statements">View all {{ review_result.key_statements|length }} extracted statement{{ review_result.key_statements|length|pluralize }} <span>→</span></button>{% else %}<a class="review-footer-link disabled" aria-disabled="true">View all extracted statements <span>→</span></a>{% endif %}
+    </section>
+  </div>
+
+  <div class="ai-review-column ai-review-center">
+    <section class="card review-card metadata-card">
+      <div class="metadata-inner">
+        <dl><div><dt>Document</dt><dd>{% if selected_evidence %}{{ selected_evidence.original_name }}{% else %}—{% endif %}</dd></div><div><dt>Review Started</dt><dd>{% if selected_evidence.review_started_at %}{{ selected_evidence.review_started_at|date:"M j, Y · g:i A" }}{% else %}—{% endif %}</dd></div><div><dt>Status</dt><dd><span class="badge {% if selected_evidence.review_status == 'in_review' %}ai{% else %}neutral{% endif %}">{% if selected_evidence %}{{ selected_evidence.get_review_status_display }}{% else %}Not available{% endif %}</span></dd></div></dl>
+      </div>
+    </section>
+
+    <section class="card review-card concerns-card">
+      <div class="review-card-title"><h2>Flagged Concerns</h2><span class="review-info" title="Potential gaps and partial matches"><svg><use href="#i-info"/></svg></span></div>
+      {% if review_result %}
+      <div class="concern-list">
+        <div class="concern-panel gap"><svg><use href="#i-alert"/></svg><div><strong>Potential Gaps <span class="count">{{ review_result.potential_gaps|length }}</span></strong>{% if review_result.potential_gaps %}<ul class="quick-list">{% for item in review_result.potential_gaps|slice:":2" %}<li><span class="quick-text clamp-2">{{ item }}</span></li>{% endfor %}</ul>{% if review_result.potential_gaps|length > 2 %}<small class="more">+{{ review_result.potential_gaps|length|add:"-2" }} more</small>{% endif %}{% else %}<p>No gaps identified.</p>{% endif %}</div></div>
+        <div class="concern-panel partial"><svg><use href="#i-clock"/></svg><div><strong>Partial Matches <span class="count">{{ review_result.partial_matches|length }}</span></strong>{% if review_result.partial_matches %}<ul class="quick-list">{% for item in review_result.partial_matches|slice:":2" %}<li><span class="quick-text clamp-2">{{ item }}</span></li>{% endfor %}</ul>{% if review_result.partial_matches|length > 2 %}<small class="more">+{{ review_result.partial_matches|length|add:"-2" }} more</small>{% endif %}{% else %}<p>No partial matches.</p>{% endif %}</div></div>
+      </div>
+      {% else %}
+      <div class="concern-list empty-concerns">
+        <div class="concern-panel gap"><svg><use href="#i-alert"/></svg><div><strong>Potential Gaps</strong><p>Awaiting evidence analysis.</p></div></div>
+        <div class="concern-panel partial"><svg><use href="#i-clock"/></svg><div><strong>Partial Matches</strong><p>Awaiting evidence analysis.</p></div></div>
+      </div>
+      {% endif %}
+      {% if review_result %}<button class="review-footer-link drawer-link" type="button" data-open-drawer="findings">View full analysis details <span>→</span></button>{% else %}<a class="review-footer-link disabled" aria-disabled="true">View full analysis details <span>→</span></a>{% endif %}
+    </section>
+
+    <section class="card review-card verification-card">
+      <div class="review-card-title"><h2>Human Verification</h2><span class="review-info" title="A qualified person must verify AI findings"><svg><use href="#i-info"/></svg></span></div>
+      <p class="verification-intro">{% if review_result %}Claude recommendation: <strong>{{ review_result.recommendation }}</strong>. A qualified person must verify these findings.{% else %}Select evidence and complete an AI analysis before verifying findings.{% endif %}</p>
+      <label>Overall Recommendation<select disabled><option>No recommendation available</option></select></label>
+      <label>Review Notes (Optional)<textarea disabled placeholder="Add your notes or observations here..."></textarea></label>
+      <p class="verification-required"><svg><use href="#i-shield-check"/></svg><span>* Human review and verification are required</span></p>
+    </section>
+  </div>
+
+  <aside class="ai-review-column ai-review-right">
+    <section class="card review-card review-actions-card">
+      <div class="review-card-title"><h2>Review Actions</h2><span class="review-info" title="Actions for qualified reviewers"><svg><use href="#i-info"/></svg></span></div>
+      <div class="review-action-list">
+        <button class="review-action accept" type="button" disabled><span class="action-icon"><svg><use href="#i-check"/></svg></span><span><strong>Accept</strong><small>Accept AI findings as accurate</small></span></button>
+        <button class="review-action reject" type="button" disabled><span class="action-icon"><svg><use href="#i-x"/></svg></span><span><strong>Reject</strong><small>Reject AI findings</small></span></button>
+        <button class="review-action edit" type="button" disabled><span class="action-icon"><svg><use href="#i-pencil"/></svg></span><span><strong>Edit Finding</strong><small>Modify AI analysis or extracted data</small></span></button>
+        <button class="review-action verify" type="button" disabled><span class="action-icon"><svg><use href="#i-shield-check"/></svg></span><span><strong>Mark as Verified</strong><small>Mark this evidence as verified</small></span></button>
+      </div>
+      <p class="audit-note"><svg><use href="#i-shield-check"/></svg> All actions are logged in the audit trail.</p>
+    </section>
+
+    <section class="card review-card timeline-card">
+      <div class="review-card-title"><h2>AI Review Timeline</h2><span class="review-info" title="Review event history"><svg><use href="#i-info"/></svg></span></div>
+      <div class="empty-timeline"><span></span><div><strong>No review activity</strong><p>Analysis and human-review events will appear here.</p></div></div>
+    </section>
+
+    <section class="human-review-notice">
+      <span class="notice-icon"><svg><use href="#i-info"/></svg></span>
+      <div><h2>Human Review Required</h2><p>AI analysis provides recommendations only. Final verification and acceptance must be completed by a qualified human reviewer.</p></div>
+    </section>
+  </aside>
+</div>
+{% if selected_evidence and review_result %}
+<div class="analysis-backdrop" data-drawer-backdrop hidden></div>
+<aside class="analysis-drawer" data-analysis-drawer role="dialog" aria-modal="true" aria-labelledby="drawer-title" tabindex="-1" hidden>
+  <header class="drawer-header">
+    <div><span class="eyebrow">AI analysis</span><h2 id="drawer-title">Full analysis</h2><p>{{ selected_evidence.original_name }}</p></div>
+    <button class="drawer-close" type="button" data-close-drawer aria-label="Close analysis"><svg><use href="#i-x"/></svg></button>
+  </header>
+  <nav class="drawer-tabs" role="tablist">
+    <button type="button" role="tab" data-drawer-tab="overview" aria-selected="true">Overview</button>
+    <button type="button" role="tab" data-drawer-tab="findings" aria-selected="false">Findings <span class="count">{{ findings_count }}</span></button>
+    <button type="button" role="tab" data-drawer-tab="statements" aria-selected="false">Statements <span class="count">{{ review_result.key_statements|length }}</span></button>
+  </nav>
+  <div class="analysis-body">
+    <section data-drawer-panel="overview">
+      <div class="drawer-hero">
+        <div class="empty-match-ring has-result" style="--match:{{ review_result.overall_match }}"><span>{{ review_result.overall_match }}%<small>Overall Match</small></span></div>
+        <div>
+          <span class="rec-pill rec-{{ review_result.recommendation }}">{% if review_result.recommendation == 'accept' %}Recommend accept{% elif review_result.recommendation == 'reject' %}Recommend reject{% else %}Needs follow-up{% endif %}</span>
+          <p class="drawer-summary">{{ review_result.summary }}</p>
+        </div>
+      </div>
+      <div class="drawer-stats">
+        <div class="stat good"><b>{{ review_result.key_criteria|length }}</b><span>Criteria met</span></div>
+        <div class="stat warn"><b>{{ review_result.partial_matches|length }}</b><span>Partial matches</span></div>
+        <div class="stat bad"><b>{{ review_result.potential_gaps|length }}</b><span>Potential gaps</span></div>
+      </div>
+      <dl class="drawer-meta">
+        <div><dt>Document</dt><dd>{{ selected_evidence.original_name }}</dd></div>
+        <div><dt>Type</dt><dd>{{ selected_evidence.extension }} · {{ selected_evidence.size|filesizeformat }}</dd></div>
+        {% if selected_evidence.review_completed_at %}<div><dt>Completed</dt><dd>{{ selected_evidence.review_completed_at|date:"M j, Y · g:i A" }}</dd></div>{% endif %}
+        {% if review_result.model %}<div><dt>Analyzed by</dt><dd>{{ review_result.model }}</dd></div>{% endif %}
+      </dl>
+      <p class="drawer-note"><svg><use href="#i-shield-check"/></svg> AI analysis is a recommendation only. A qualified person must verify these findings.</p>
+    </section>
+
+    <section data-drawer-panel="findings" hidden>
+      <div class="finding-group good">
+        <h3><svg><use href="#i-check"/></svg>Criteria met <span class="count">{{ review_result.key_criteria|length }}</span></h3>
+        {% if review_result.key_criteria %}<ul>{% for item in review_result.key_criteria %}<li>{{ item }}</li>{% endfor %}</ul>{% else %}<p class="finding-empty">None identified.</p>{% endif %}
+      </div>
+      <div class="finding-group warn">
+        <h3><svg><use href="#i-clock"/></svg>Partial matches <span class="count">{{ review_result.partial_matches|length }}</span></h3>
+        {% if review_result.partial_matches %}<ul>{% for item in review_result.partial_matches %}<li>{{ item }}</li>{% endfor %}</ul>{% else %}<p class="finding-empty">None identified.</p>{% endif %}
+      </div>
+      <div class="finding-group bad">
+        <h3><svg><use href="#i-alert"/></svg>Potential gaps <span class="count">{{ review_result.potential_gaps|length }}</span></h3>
+        {% if review_result.potential_gaps %}<ul>{% for item in review_result.potential_gaps %}<li>{{ item }}</li>{% endfor %}</ul>{% else %}<p class="finding-empty">None identified.</p>{% endif %}
+      </div>
+    </section>
+
+    <section data-drawer-panel="statements" hidden>
+      {% if review_result.key_statements %}
+      <ul class="statement-list">{% for statement in review_result.key_statements %}<li><blockquote>{{ statement.text }}</blockquote><span class="conf-pill conf-{{ statement.confidence|lower }}">{{ statement.confidence }} confidence</span></li>{% endfor %}</ul>
+      {% else %}<p class="finding-empty">No statements were extracted.</p>{% endif %}
+    </section>
+  </div>
+</aside>
+{% endif %}
+{% if selected_evidence %}
+<div class="review-overlay" data-review-overlay data-review-live data-status-url="{% url 'ai_review_status' selected_evidence.pk %}" data-review-status="{{ selected_evidence.review_status }}" role="alertdialog" aria-modal="true" aria-labelledby="review-overlay-title" {% if selected_evidence.review_status != 'in_review' %}hidden{% endif %}>
+  <div class="review-overlay-card">
+    <div class="review-spinner" aria-hidden="true"></div>
+    <h2 id="review-overlay-title">Reviewing {{ selected_evidence.original_name }}</h2>
+    <p>Claude is analyzing this document. This usually takes under a minute.</p>
+    <ol class="review-steps" data-review-steps>
+      {% for label in review_steps %}<li data-step="{{ forloop.counter0 }}" class="{% if forloop.counter0 < review_step %}is-done{% elif forloop.counter0 == review_step %}is-current{% endif %}"><i></i><span>{{ label }}</span></li>{% endfor %}
+    </ol>
+    <button class="button button-danger-outline" type="submit" form="review-form" name="action" value="stop" data-review-overlay-stop>Stop Review</button>
+  </div>
+</div>
+{% endif %}
 {% endblock %}

@@ -1,0 +1,35 @@
+{
+  "expectations": [
+    {
+      "text": "Classifies copper as a Group II pollutant (toxic metal) with a technical review criterion of 1.2x the limit (20% over)",
+      "passed": true,
+      "evidence": "Copper is a metal, Group II (1.2x); notes group should be confirmed"
+    },
+    {
+      "text": "Concludes 25% over in 2 of 6 months MEETS the TRC, so the effluent criterion for SNC is met",
+      "passed": true,
+      "evidence": "1.25x in 2 of 6 months meets TRC (\"probable TRC SNC\", conditional on Group II)"
+    },
+    {
+      "text": "Notes the chronic criterion (4 of 6 months) is not met by two months",
+      "passed": true,
+      "evidence": "Chronic needs 4 of 6; 2 does not meet"
+    },
+    {
+      "text": "Says the DMR filed 45 days late is a reporting violation that can independently count toward SNC (30+ days late)",
+      "passed": true,
+      "evidence": "45-day-late DMR is a reporting violation counting toward SNC (flags 30-day as [G])"
+    },
+    {
+      "text": "States that SNC status is assigned by EPA/the state and the permittee's own reading is indicative",
+      "passed": true,
+      "evidence": "SNC assigned by EPA/state; assessment indicative"
+    }
+  ],
+  "summary": {
+    "passed": 5,
+    "failed": 0,
+    "total": 5,
+    "pass_rate": 1.0
+  }
+}

@@ -1,0 +1,45 @@
+{
+  "skill_name": "npdes-dmr-compliance",
+  "evals": [
+    {
+      "id": 1,
+      "name": "nd-copper",
+      "prompt": "Our lab just sent back copper for outfall 001 as '<5 ug/L' for October. The daily max in our PA NPDES permit is 3 ug/L. Is that a violation, and how should I put it on the DMR? Keep it short, I need to reply to my plant manager.",
+      "expected_output": "Not an automatic violation and not a pass: the reporting limit exceeds the permit limit so compliance cannot be demonstrated. Report as <5 (never 0 or ND), flag for review, check permit Part C / contact DEP.",
+      "assertions": [
+        "States it is not simply a violation (and not a clean pass): compliance cannot be demonstrated or refuted from the result",
+        "Says the value is reported as <5 (the quantitation/reporting limit), not as 0, ND, or No Discharge",
+        "Notes the reporting limit (5) is above the permit limit (3), i.e. the method is not sensitive enough, and recommends review/consulting the permit or DEP",
+        "Does not claim a specific penalty or enforcement outcome",
+        "Does not conclude the result is compliant without first checking the permit's required method/quantitation limit",
+        "Does not say non-detects are treated as zero in the average (PA uses the reporting limit and qualifies the result with <)"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "nodi-missed-sample",
+      "prompt": "The autosampler at outfall 002 died the first half of September so we only got one TSS sample instead of the two our PA permit requires. What do I enter on the eDMR for the missing sample and does that count as a violation?",
+      "expected_output": "PA code E (failed to sample/analysis not conducted) is a violation, needs a comment and the Non-Compliance Reporting Form 3800-FM-BCW0440; not C/No Discharge; GG/FF are not applicable; human/permit confirms.",
+      "assertions": [
+        "Identifies PA NODI code E (missed sample / analysis not conducted) for the missing sample",
+        "States that using E results in a reporting violation",
+        "Mentions an explanatory comment and/or the Non-Compliance Reporting Form (3800-FM-BCW0440)",
+        "Says not to use No Discharge (C) because the facility did discharge",
+        "Still reports the one sample that was taken"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "snc-copper-late",
+      "prompt": "Our copper monthly average exceeded the permit limit by about 25% in two of the last six months, and separately our July DMR was filed 45 days after the due date. Does either of those put us in significant noncompliance? Explain which criteria apply.",
+      "expected_output": "Copper is Group II (TRC 1.2 = 20%); 25% in 2 of 6 months meets the effluent TRC criterion, so yes on effluent. The DMR filed 45 days late is also a reporting violation that counts (30+ days late). SNC is assigned by EPA/state.",
+      "assertions": [
+        "Classifies copper as a Group II pollutant (toxic metal) with a technical review criterion of 1.2x the limit (20% over)",
+        "Concludes 25% over in 2 of 6 months MEETS the TRC, so the effluent criterion for SNC is met",
+        "Notes the chronic criterion (4 of 6 months) is not met by two months",
+        "Says the DMR filed 45 days late is a reporting violation that can independently count toward SNC (30+ days late)",
+        "States that SNC status is assigned by EPA/the state and the permittee's own reading is indicative"
+      ]
+    }
+  ]
+}

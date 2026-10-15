@@ -23,7 +23,7 @@ thresholds uses exact rationals, never floating point.
 - `permit/eval.rkt` -- evaluates monitoring samples against a permit for a
   given reporting period ("YYYY-MM"), producing one evidence `trace` per
   substantive limit clause. Status set: `pass`, `exceedance`,
-  `missing-data`, `unit-error`, `report-only`.
+  `review-required`, `under-sampled` (on a separate `sample-frequency` trace), `missing-data`, `unit-error`, `report-only`.
 - `permit/permits/pa0000000.rkt` -- **fictional placeholder permit** used
   only to exercise the DSL syntax; not derived from a real PA NPDES permit.
 - `pipeline/lang.rkt` -- the Evidence Pipeline DSL: `pipeline` plus step
@@ -46,8 +46,8 @@ racket dsl/main.rkt run --permit <file> --pipeline <file> [--period YYYY-MM]
 racket dsl/main.rkt describe --permit <file>
 ```
 
-`run` reads `{"schema_version": 1, "records": [...]}` on stdin and writes
-`{"schema_version": 1, "provenance": [...], "results": [...], "rejections": [...]}`
+`run` reads `{"schema_version": 3, "records": [...]}` on stdin and writes
+`{"schema_version": 3, "provenance": [...], "results": [...], "rejections": [...]}`
 to stdout. `--period` is optional; if omitted it's inferred from the first
 record's `sample_date`. `describe` writes a permit's limits as JSON so other
 layers never have to parse s-expressions.

@@ -130,11 +130,11 @@
      (define new-value
        (case treat-as
          [(zero) 0]
-         [(half-mdl) (/ magnitude 2)]
          [(report-limit) magnitude]))
      (define new-rec (hash-set (hash-set rec 'value (number->string new-value)) 'non_detect #t))
      (mk-ok name rec new-rec
-            (~a "non-detect value " valstr " treated as " treat-as " -> " (number->string new-value)))]
+            (~a "non-detect value " valstr " treated as " treat-as " -> " (number->string new-value)
+                (let ([b (step:non-detect-basis step)]) (if b (~a " (basis: " b ")") ""))))]
     [else
      (define new-rec (hash-set rec 'non_detect #f))
      (mk-ok name rec new-rec "not a non-detect value")]))

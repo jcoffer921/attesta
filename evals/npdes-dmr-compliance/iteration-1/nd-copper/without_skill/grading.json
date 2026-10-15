@@ -1,0 +1,30 @@
+{
+  "expectations": [
+    {
+      "text": "States it is not simply a violation (and not a clean pass): compliance cannot be demonstrated or refuted from the result",
+      "passed": true,
+      "evidence": "\"Not a violation on its face, and not proven compliant\""
+    },
+    {
+      "text": "Says the value is reported as <5 (the quantitation/reporting limit), not as 0, ND, or No Discharge",
+      "passed": true,
+      "evidence": "Report <5 with QL, never 0, 3 or 5"
+    },
+    {
+      "text": "Notes the reporting limit (5) is above the permit limit (3), i.e. the method is not sensitive enough, and recommends review/consulting the permit or DEP",
+      "passed": true,
+      "evidence": "Notes QL above limit; check permit QL/method, use lower-QL method. Also says \"<5 is compliant if permit QL is 5 or higher\", a less careful claim"
+    },
+    {
+      "text": "Does not claim a specific penalty or enforcement outcome",
+      "passed": true,
+      "evidence": "No penalty claim"
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 0,
+    "total": 4,
+    "pass_rate": 1.0
+  }
+}

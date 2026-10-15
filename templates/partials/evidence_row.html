@@ -1,0 +1,8 @@
+<tr data-evidence-id="{{ item.pk }}">
+  <td><span class="file-name"><i class="file-icon {% if item.extension == 'PDF' %}pdf{% elif item.extension == 'DOCX' %}doc{% elif item.extension == 'XLSX' %}xls{% else %}img{% endif %}">{{ item.extension }}</i><span><b>{{ item.original_name }}</b><small>{{ item.size|filesizeformat }}</small></span></span></td>
+  <td>{{ item.uploaded_at|date:"M j, Y" }}<small>{{ item.uploaded_at|time:"g:i A" }}</small></td>
+  <td><span class="file-badge {% if item.extension == 'PDF' %}pdf{% elif item.extension == 'DOCX' %}doc{% elif item.extension == 'XLSX' %}xls{% else %}img{% endif %}">{{ item.extension }}</span></td>
+  <td>{{ item.uploaded_by.get_full_name|default:item.uploaded_by.get_username }}</td>
+  <td><span class="badge {% if item.review_status == 'in_review' %}ai{% elif item.review_status == 'stopped' %}warning{% elif item.review_status == 'reviewed' %}success{% elif item.review_status == 'error' %}danger{% else %}neutral{% endif %}">{{ item.get_review_status_display }}</span></td>
+  <td><a class="text-button" href="{% url 'ai_review' %}?evidence={{ item.pk }}">Review</a> <a class="text-button" href="{% url 'evidence_download' item.pk %}">Download</a></td>
+</tr>

@@ -33,7 +33,7 @@ def test_failed_explanation_does_not_alter_stored_status_or_any_other_field():
     result = make_result()
     before = snapshot(result)
 
-    with patch("apps.ai_assist.services._call_gemini", side_effect=RuntimeError("quota exceeded")):
+    with patch("apps.ai_assist.services._call_claude", side_effect=RuntimeError("quota exceeded")):
         with pytest.raises(ExplanationError):
             explain_result(result.pk)
 
@@ -47,11 +47,11 @@ def test_successful_explanation_only_changes_gemini_explanation_field():
     result = make_result()
     before = snapshot(result)
 
-    with patch("apps.ai_assist.services._call_gemini", return_value="TSS stayed within its monthly average limit."):
+    with patch("apps.ai_assist.services._call_claude", return_value="TSS stayed within its monthly average limit."):
         explanation = explain_result(result.pk)
 
     after = snapshot(result)
     assert after == before  # every engine-owned field is untouched
     result.refresh_from_db()
     assert result.gemini_explanation == explanation == "TSS stayed within its monthly average limit."
-    assert result.status == "pass"  # explicitly: Gemini never wrote status
+    assert result.status == "pass"  # explicitly: Claude never wrote status

@@ -1,0 +1,11 @@
+{
+  "eval_id": 1,
+  "eval_name": "nd-copper",
+  "assertions": [
+    "States it is not simply a violation (and not a clean pass): compliance cannot be demonstrated or refuted from the result",
+    "Says the value is reported as <5 (the quantitation/reporting limit), not as 0, ND, or No Discharge",
+    "Notes the reporting limit (5) is above the permit limit (3), i.e. the method is not sensitive enough, and recommends review/consulting the permit or DEP",
+    "Does not claim a specific penalty or enforcement outcome",
+    "Does not conclude the result is compliant without first checking the permit's required method/quantitation limit"
+  ]
+}

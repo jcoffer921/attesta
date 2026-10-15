@@ -1,6 +1,61 @@
 {% extends "app_base.html" %}{% block app_content %}
-<div class="page-header"><div><p class="eyebrow">Evidence management</p><h1>Evidence</h1><p>Upload, manage, and organize your compliance evidence</p></div><div><button class="button button-secondary">Bulk Actions</button> <button class="button button-primary" data-upload-trigger><svg><use href="#i-upload"/></svg>Upload Evidence</button></div></div>
-<div class="upload-zone" data-upload-zone tabindex="0"><span class="upload-icon"><svg><use href="#i-upload"/></svg></span><div><b>Drag and drop files here or <button data-upload-trigger>click to browse</button></b><p>PDF, DOCX, XLSX, PNG or JPG · Maximum 25 MB</p></div><input type="file" multiple hidden data-file-input></div>
-<section class="card table-card"><div class="filterbar"><label class="search-box"><svg><use href="#i-search"/></svg><input data-table-search placeholder="Search evidence"></label><select><option>All Frameworks</option></select><select><option>All File Types</option></select><select><option>All Owners</option></select><select><option>All Statuses</option></select></div><div class="table-scroll"><table data-table><thead><tr><th><input type="checkbox"></th><th>Evidence Name</th><th>Linked Requirement</th><th>Uploaded</th><th>File Type</th><th>Reviewer</th><th>AI Status</th></tr></thead><tbody>
-</tbody></table><p class="muted table-empty">No evidence has been uploaded yet.</p></div></section>
+<div class="page-header">
+  <div><p class="eyebrow">Evidence management</p><h1>Evidence</h1><p>Upload, manage, and organize your compliance evidence</p></div>
+  <div><button class="button button-secondary" type="button">Bulk Actions</button> <button class="button button-primary" type="button" data-upload-trigger><svg><use href="#i-upload"/></svg>Upload Evidence</button></div>
+</div>
+{% if upload_error %}<div class="form-error" role="alert">{{ upload_error }}</div>{% endif %}
+<form method="post" enctype="multipart/form-data" data-upload-form>
+  {% csrf_token %}
+  <div class="upload-zone" data-upload-zone tabindex="0">
+    <span class="upload-icon"><svg><use href="#i-upload"/></svg></span>
+    <div><b>Drag and drop files here or <button type="button" data-upload-trigger>click to browse</button></b><p>PDF, DOCX, XLSX, PNG or JPG &middot; Maximum 25 MB &middot; Confirm before AI Review</p></div>
+    <input type="file" name="files" accept=".pdf,.docx,.xlsx,.png,.jpg,.jpeg" multiple hidden data-file-input>
+  </div>
+</form>
+<section class="card table-card">
+  <div class="filterbar"><label class="search-box"><svg><use href="#i-search"/></svg><input data-table-search placeholder="Search evidence"></label><select><option>All File Types</option></select><select><option>All Statuses</option></select></div>
+  <div class="table-scroll"><table data-table><thead><tr><th>Evidence Name</th><th>Uploaded</th><th>File Type</th><th>Owner</th><th>AI Status</th><th></th></tr></thead><tbody data-evidence-body>
+    {% for item in evidence_items %}
+    {% include "partials/evidence_row.html" %}
+    {% empty %}<tr data-evidence-empty><td colspan="6"><p class="muted table-empty">No evidence has been uploaded yet.</p></td></tr>{% endfor %}
+  </tbody></table></div>
+</section>
+{% if uploaded_evidence %}
+<div class="modal open upload-confirmation" role="dialog" aria-modal="true" aria-labelledby="upload-confirmation-title">
+  <div class="modal-card">
+    <button class="modal-close" type="button" data-modal-close aria-label="Close confirmation">&times;</button>
+    <span class="upload-confirmation-icon"><svg><use href="#i-check"/></svg></span>
+    <p class="eyebrow">Upload complete</p>
+    <h2 id="upload-confirmation-title">Confirm this document</h2>
+    <p>The document is saved in Evidence. Confirm it to continue to AI Review with this file selected.</p>
+    <div class="uploaded-document-card">
+      <i class="file-icon {% if uploaded_evidence.extension == 'PDF' %}pdf{% elif uploaded_evidence.extension == 'DOCX' %}doc{% elif uploaded_evidence.extension == 'XLSX' %}xls{% else %}img{% endif %}">{{ uploaded_evidence.extension }}</i>
+      <span><strong>{{ uploaded_evidence.original_name }}</strong><small>{{ uploaded_evidence.size|filesizeformat }} &middot; Uploaded {{ uploaded_evidence.uploaded_at|date:"M j, Y" }} at {{ uploaded_evidence.uploaded_at|time:"g:i A" }}</small></span>
+      <span class="badge success"><svg><use href="#i-check"/></svg>Uploaded</span>
+    </div>
+    <div class="modal-actions">
+      <button class="button button-secondary" type="button" data-modal-close>Keep in Evidence</button>
+      <a class="button button-primary" href="{% url 'ai_review' %}?evidence={{ uploaded_evidence.pk }}&uploaded=1">Confirm &amp; Open AI Review</a>
+    </div>
+  </div>
+</div>
+{% endif %}
+<div class="modal upload-progress-modal" data-upload-progress-modal role="dialog" aria-modal="true" aria-labelledby="upload-progress-title" aria-live="polite">
+  <div class="modal-card">
+    <button class="modal-close" type="button" data-upload-cancel aria-label="Cancel upload">&times;</button>
+    <span class="upload-live-icon"><svg><use href="#i-upload"/></svg></span>
+    <p class="eyebrow" data-upload-stage>Preparing upload</p>
+    <h2 id="upload-progress-title" data-upload-title>Uploading evidence</h2>
+    <p data-upload-message>Your document is being securely transferred to Attesta.</p>
+    <div class="upload-file-list" data-upload-files></div>
+    <div class="upload-progress-track" role="progressbar" aria-label="Upload progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" data-upload-progress>
+      <span data-upload-progress-bar></span>
+    </div>
+    <div class="upload-progress-meta"><span data-upload-detail>Starting&hellip;</span><strong data-upload-percent>0%</strong></div>
+    <div class="modal-actions upload-complete-actions" data-upload-actions hidden>
+      <button class="button button-secondary" type="button" data-upload-close>Keep in Evidence</button>
+      <a class="button button-primary" href="#" data-upload-review>Confirm &amp; Open AI Review</a>
+    </div>
+  </div>
+</div>
 {% endblock %}

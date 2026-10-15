@@ -27,8 +27,7 @@
 
 ;; non-detect: each valid treat-as value must expand successfully.
 (test-case "non-detect accepts each documented treat-as value"
-  (check-equal? (step:non-detect-treat-as (non-detect (marker "<") (treat-as zero))) 'zero)
-  (check-equal? (step:non-detect-treat-as (non-detect (marker "<") (treat-as half-mdl))) 'half-mdl)
+  (check-equal? (step:non-detect-treat-as (non-detect (marker "<") (treat-as zero) (basis "Ch. 16 App. A Table 2A"))) 'zero)
   (check-equal? (step:non-detect-treat-as (non-detect (marker "<") (treat-as report-limit))) 'report-limit))
 
 ;; non-detect: there is no default -- an invalid or missing treat-as is a
@@ -36,3 +35,12 @@
 (test-case "non-detect rejects an invalid treat-as at macro-expansion time"
   (check-exn exn:fail:syntax?
              (lambda () (expand #'(non-detect (marker "<") (treat-as bogus))))))
+
+;; PA: zero is only valid with a stated basis; half-mdl is no longer offered.
+(test-case "non-detect treat-as zero without a basis is rejected"
+  (check-exn exn:fail:syntax?
+             (lambda () (expand #'(non-detect (marker "<") (treat-as zero))))))
+
+(test-case "non-detect treat-as half-mdl is rejected"
+  (check-exn exn:fail:syntax?
+             (lambda () (expand #'(non-detect (marker "<") (treat-as half-mdl))))))

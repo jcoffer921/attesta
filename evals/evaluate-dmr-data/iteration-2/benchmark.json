@@ -1,0 +1,275 @@
+{
+  "metadata": {
+    "skill_name": "evaluate-dmr-data",
+    "skill_path": ".claude/skills/evaluate-dmr-data",
+    "executor_model": "claude-sonnet-5-5",
+    "analyzer_model": "claude-sonnet-5-5",
+    "timestamp": "2026-10-15T00:00:00Z",
+    "evals_run": [
+      1,
+      2
+    ],
+    "runs_per_configuration": 1
+  },
+  "runs": [
+    {
+      "eval_id": 2,
+      "eval_name": "nd-mixed-conversion",
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 6,
+        "failed": 0,
+        "total": 6,
+        "time_seconds": 44.1,
+        "tokens": 59087,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Actually ran the engine rather than computing by hand",
+          "passed": true,
+          "evidence": "Ran engine"
+        },
+        {
+          "text": "Reports TSS daily-max as exceedance with computed value 65, attributed to the detected sample m3 (not to the non-detect)",
+          "passed": true,
+          "evidence": "daily-max 65 exceedance from detected m3"
+        },
+        {
+          "text": "Reports TSS monthly-avg as review-required with a '<'-qualified value (<127/4, i.e. 31.75), NOT as exceedance",
+          "passed": true,
+          "evidence": "monthly-avg <127/4 review-required"
+        },
+        {
+          "text": "Explains why the two clauses differ: the average exceeds 30 only because the non-detect is counted at its reporting limit (29.25 with it at zero), while the daily max is driven by a detected value",
+          "passed": true,
+          "evidence": "Explains 31.75 vs 29.25 and detected-driven daily max"
+        },
+        {
+          "text": "Notes sample m4 was converted from ug/L to mg/L (12000 ug/L = 12 mg/L) via the pipeline",
+          "passed": true,
+          "evidence": "m4 converted 12000 ug/L -> 12 mg/L"
+        },
+        {
+          "text": "Recommends concrete next steps (human review of the average, confirm the reporting limit/method, address the detected daily-max exceedance and notification duties)",
+          "passed": true,
+          "evidence": "Human decision, lower RL, notification check, supply pH/Flow"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 2,
+      "eval_name": "nd-mixed-conversion",
+      "configuration": "without_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.8333333333333334,
+        "passed": 5,
+        "failed": 1,
+        "total": 6,
+        "time_seconds": 29.9,
+        "tokens": 52424,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Actually ran the engine rather than computing by hand",
+          "passed": true,
+          "evidence": "Ran engine"
+        },
+        {
+          "text": "Reports TSS daily-max as exceedance with computed value 65, attributed to the detected sample m3 (not to the non-detect)",
+          "passed": true,
+          "evidence": "daily-max 65 exceedance from detected m3"
+        },
+        {
+          "text": "Reports TSS monthly-avg as review-required with a '<'-qualified value (<127/4, i.e. 31.75), NOT as exceedance",
+          "passed": false,
+          "evidence": "Status review-required but value reported unqualified (127/4 = 31.75, no \"<\")"
+        },
+        {
+          "text": "Explains why the two clauses differ: the average exceeds 30 only because the non-detect is counted at its reporting limit (29.25 with it at zero), while the daily max is driven by a detected value",
+          "passed": true,
+          "evidence": "Explains the average depends on non-detect treatment, daily max does not"
+        },
+        {
+          "text": "Notes sample m4 was converted from ug/L to mg/L (12000 ug/L = 12 mg/L) via the pipeline",
+          "passed": true,
+          "evidence": "m4 converted"
+        },
+        {
+          "text": "Recommends concrete next steps (human review of the average, confirm the reporting limit/method, address the detected daily-max exceedance and notification duties)",
+          "passed": true,
+          "evidence": "Next steps given"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 1,
+      "eval_name": "october-mixed",
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 7,
+        "failed": 0,
+        "total": 7,
+        "time_seconds": 33.7,
+        "tokens": 58699,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Actually ran the engine (cites the racket command or its JSON output) rather than computing by hand",
+          "passed": true,
+          "evidence": "Ran engine"
+        },
+        {
+          "text": "Reports TSS monthly-avg and TSS daily-max as exceedance with computed values 39 and 62",
+          "passed": true,
+          "evidence": "39 and 62 exceedance"
+        },
+        {
+          "text": "Reports pH as missing-data (fewer samples than the weekly frequency requires)",
+          "passed": true,
+          "evidence": "pH missing-data"
+        },
+        {
+          "text": "Reports the Flow limit as report-only",
+          "passed": true,
+          "evidence": "Flow report-only"
+        },
+        {
+          "text": "Identifies the record p5 as rejected because the method field is missing and does not silently drop it",
+          "passed": true,
+          "evidence": "p5 rejected for missing method"
+        },
+        {
+          "text": "Reconciles record counts (9 in = 8 used + 1 rejected)",
+          "passed": true,
+          "evidence": "9 in = 8 used + 1 rejected"
+        },
+        {
+          "text": "Does not declare the facility compliant, and lists what the engine does not evaluate (e.g. mass loads, late submission, NODI validity)",
+          "passed": true,
+          "evidence": "Not compliant; not-evaluated list present; SHA-256 recorded"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 1,
+      "eval_name": "october-mixed",
+      "configuration": "without_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.7142857142857143,
+        "passed": 5,
+        "failed": 2,
+        "total": 7,
+        "time_seconds": 23.9,
+        "tokens": 55224,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Actually ran the engine (cites the racket command or its JSON output) rather than computing by hand",
+          "passed": true,
+          "evidence": "Ran engine"
+        },
+        {
+          "text": "Reports TSS monthly-avg and TSS daily-max as exceedance with computed values 39 and 62",
+          "passed": true,
+          "evidence": "39 and 62 exceedance"
+        },
+        {
+          "text": "Reports pH as missing-data (fewer samples than the weekly frequency requires)",
+          "passed": true,
+          "evidence": "pH missing-data"
+        },
+        {
+          "text": "Reports the Flow limit as report-only",
+          "passed": true,
+          "evidence": "Flow report-only"
+        },
+        {
+          "text": "Identifies the record p5 as rejected because the method field is missing and does not silently drop it",
+          "passed": true,
+          "evidence": "p5 rejected for missing method"
+        },
+        {
+          "text": "Reconciles record counts (9 in = 8 used + 1 rejected)",
+          "passed": false,
+          "evidence": "No count reconciliation"
+        },
+        {
+          "text": "Does not declare the facility compliant, and lists what the engine does not evaluate (e.g. mass loads, late submission, NODI validity)",
+          "passed": false,
+          "evidence": "Says not compliant but no not-evaluated list; adds speculative \"dated after today\" concern"
+        }
+      ],
+      "notes": []
+    }
+  ],
+  "run_summary": {
+    "with_skill": {
+      "pass_rate": {
+        "mean": 1.0,
+        "stddev": 0.0,
+        "min": 1.0,
+        "max": 1.0
+      },
+      "time_seconds": {
+        "mean": 38.9,
+        "stddev": 5.2,
+        "min": 33.7,
+        "max": 44.1
+      },
+      "tokens": {
+        "mean": 58893,
+        "stddev": 194.0,
+        "min": 58699,
+        "max": 59087
+      }
+    },
+    "without_skill": {
+      "pass_rate": {
+        "mean": 0.774,
+        "stddev": 0.06,
+        "min": 0.714,
+        "max": 0.833
+      },
+      "time_seconds": {
+        "mean": 26.9,
+        "stddev": 3.0,
+        "min": 23.9,
+        "max": 29.9
+      },
+      "tokens": {
+        "mean": 53824,
+        "stddev": 1400.0,
+        "min": 52424,
+        "max": 55224
+      }
+    },
+    "delta": {
+      "pass_rate": "+0.23",
+      "time_seconds": "+12.00",
+      "tokens": "+5069.00"
+    }
+  },
+  "notes": [
+    "nd-mixed-conversion discriminates on the < qualifier: baseline reports review-required but states 31.75 without the \"<\" required by PA; the skill run reports <127/4.",
+    "october-mixed again discriminates on process: baseline has no reconciliation and no not-evaluated list.",
+    "Both baselines added a speculative \"sample dates are after today\" concern; the skill runs did not.",
+    "With-skill runs take ~5-15s longer and ~5k more tokens."
+  ]
+}

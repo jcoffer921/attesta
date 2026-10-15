@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% load static %}
+{% block extra_head %}<link rel="stylesheet" href="{% static 'css/auth.css' %}">{% endblock %}
+{% block body %}
+{% include "partials/icons.html" %}
+<main class="auth-page">
+  <section class="auth-story" aria-labelledby="auth-welcome-title">
+    <div class="auth-story-inner">
+      {% include "partials/brand.html" %}
+      <div class="auth-intro"><h1 id="auth-welcome-title">Welcome to Attesta</h1><p>AI-powered compliance monitoring and management<br class="auth-desktop-break"> that helps you stay audit-ready, every day.</p></div>
+      <div class="auth-features">
+        <article><span class="auth-feature-icon blue"><svg><use href="#i-shield-check"/></svg></span><div><h2>Stay Audit-Ready</h2><p>Continuously monitor requirements and<br> evidence to reduce audit risk.</p></div></article>
+        <article><span class="auth-feature-icon green"><svg><use href="#i-insights"/></svg></span><div><h2>AI-Powered Insights</h2><p>Surface gaps, prioritize risks, and get intelligent<br> recommendations to stay ahead.</p></div></article>
+        <article><span class="auth-feature-icon amber"><svg><use href="#i-clipboard"/></svg></span><div><h2>Centralize &amp; Automate</h2><p>Unify requirements, evidence, and workflows<br> in one intelligent workspace.</p></div></article>
+        <article><span class="auth-feature-icon red"><svg><use href="#i-users"/></svg></span><div><h2>Built for Compliance Teams</h2><p>Collaborate across teams and frameworks<br> with clarity and confidence.</p></div></article>
+      </div>
+      {% include "partials/compliance_illustration.html" %}
+    </div>
+  </section>
+  <section class="auth-form-side">
+    <div class="auth-mobile-brand">{% include "partials/brand.html" %}</div>
+    <div class="auth-mobile-welcome"><h1>Welcome to Attesta</h1><p>Set up your intelligent compliance workspace.</p></div>
+    <form class="auth-card auth-card-signup" method="post" action="{% url 'signup' %}" data-auth-form data-loading-label="Creating account…">
+      {% csrf_token %}
+      <header class="auth-card-heading"><h2>Create your account</h2><p>Set up your compliance workspace</p></header>
+      {% if error %}<p class="form-error" role="alert">{{ error }}</p>{% endif %}
+      <label class="auth-label" for="signup-name">Full name</label><div class="auth-input-wrap"><svg><use href="#i-user"/></svg><input id="signup-name" type="text" name="full_name" required autocomplete="name" autofocus value="{{ form.full_name|default:'' }}" placeholder="Your full name"></div>
+      <label class="auth-label" for="signup-email">Work email</label><div class="auth-input-wrap"><svg><use href="#i-mail"/></svg><input id="signup-email" type="email" name="email" required autocomplete="email" value="{{ form.email|default:'' }}" placeholder="name@acmecorp.com"></div>
+      <label class="auth-label" for="signup-org">Company / organization name</label><div class="auth-input-wrap"><svg><use href="#i-building"/></svg><input id="signup-org" type="text" name="organization_name" required autocomplete="organization" value="{{ form.organization_name|default:'' }}" placeholder="Acme Corporation"></div>
+      <div class="auth-field-grid"><div><label class="auth-label" for="signup-password">Password</label><div class="auth-input-wrap password-field"><svg><use href="#i-lock"/></svg><input id="signup-password" type="password" name="password" required autocomplete="new-password" placeholder="Create password"><button type="button" data-password-toggle aria-label="Show password"><svg><use href="#i-eye"/></svg></button></div></div><div><label class="auth-label" for="signup-confirm">Confirm password</label><div class="auth-input-wrap password-field"><svg><use href="#i-lock"/></svg><input id="signup-confirm" type="password" name="password_confirm" required autocomplete="new-password" placeholder="Repeat password"><button type="button" data-password-toggle aria-label="Show password"><svg><use href="#i-eye"/></svg></button></div></div></div>
+      <button class="auth-submit" type="submit">Create Account</button>
+      <p class="auth-terms">By creating an account, you agree to our <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>.</p>
+      <p class="auth-switch">Already have an account? <a href="{% url 'login' %}">Sign in</a></p>
+    </form>
+  </section>
+  <footer class="auth-footer"><span>© 2026 Attesta, Inc. All rights reserved.</span><a href="#">Privacy Policy</a><a href="#">Terms of Service</a></footer>
+</main>
+<div class="toast" role="status" data-toast-box><svg><use href="#i-check"/></svg><span>Action completed</span></div>
+{% endblock %}

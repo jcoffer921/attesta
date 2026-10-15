@@ -1,6 +1,6 @@
 """AI interprets; the rule engine decides.
 
-Gemini reads an already-persisted LimitResult trace and writes a
+Claude reads an already-persisted LimitResult trace and writes a
 plain-language explanation into its own field. It never sees or touches
 `status`, and it is only ever called after apps.validation.services.run_validation
 has already committed the run.
@@ -8,22 +8,26 @@ has already committed the run.
 
 from __future__ import annotations
 
-from django.conf import settings
-
+from apps.ingestion import claude_review
 from apps.validation.models import LimitResult
 
 
 class ExplanationError(Exception):
-    """Raised when Gemini could not produce an explanation. Never partially writes."""
+    """Raised when Claude could not produce an explanation. Never partially writes."""
 
 
-def _call_gemini(prompt: str) -> str:  # pragma: no cover - thin wrapper around the real API call
-    import google.generativeai as genai
-
-    genai.configure(api_key=settings.GEMINI_API_KEY)
-    model = genai.GenerativeModel("gemini-pro")
-    response = model.generate_content(prompt)
-    return response.text
+def _call_claude(prompt: str) -> str:
+    """Ask Claude for a short explanation. Shares the evidence-review HTTP
+    client (key, model fallback, retries)."""
+    response = claude_review._post_to_claude({
+        "max_tokens": 300,
+        "messages": [{"role": "user", "content": prompt}],
+    })
+    blocks = response.get("content") or []
+    text = "".join(b.get("text", "") for b in blocks if isinstance(b, dict) and b.get("type") == "text")
+    if not text.strip():
+        raise ExplanationError("Claude returned an empty explanation.")
+    return text.strip()
 
 
 def _build_prompt(result: LimitResult) -> str:
@@ -43,7 +47,7 @@ def _build_prompt(result: LimitResult) -> str:
 
 
 def explain_result(limit_result_id: int) -> str:
-    """Fetch one LimitResult, ask Gemini for a plain-language explanation,
+    """Fetch one LimitResult, ask Claude for a plain-language explanation,
     and persist it via a targeted update of gemini_explanation only.
 
     Raises ExplanationError on any failure without writing anything, so a
@@ -54,9 +58,9 @@ def explain_result(limit_result_id: int) -> str:
     prompt = _build_prompt(result)
 
     try:
-        explanation = _call_gemini(prompt)
+        explanation = _call_claude(prompt)
     except Exception as exc:
-        raise ExplanationError(f"Gemini explanation failed: {exc}") from exc
+        raise ExplanationError(f"Claude explanation failed: {exc}") from exc
 
     LimitResult.objects.filter(pk=limit_result_id).update(gemini_explanation=explanation)
     return explanation

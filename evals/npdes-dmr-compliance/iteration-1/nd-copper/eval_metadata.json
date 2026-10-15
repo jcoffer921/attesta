@@ -1,0 +1,11 @@
+{
+  "eval_id": 1,
+  "eval_name": "nd-copper",
+  "prompt": "Our lab just sent back copper for outfall 001 as '<5 ug/L' for October. The daily max in our PA NPDES permit is 3 ug/L. Is that a violation, and how should I put it on the DMR? Keep it short, I need to reply to my plant manager.",
+  "assertions": [
+    "States it is not simply a violation (and not a clean pass): compliance cannot be demonstrated or refuted from the result",
+    "Says the value is reported as <5 (the quantitation/reporting limit), not as 0, ND, or No Discharge",
+    "Notes the reporting limit (5) is above the permit limit (3), i.e. the method is not sensitive enough, and recommends review/consulting the permit or DEP",
+    "Does not claim a specific penalty or enforcement outcome"
+  ]
+}

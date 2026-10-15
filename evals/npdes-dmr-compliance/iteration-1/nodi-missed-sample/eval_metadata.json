@@ -1,0 +1,12 @@
+{
+  "eval_id": 2,
+  "eval_name": "nodi-missed-sample",
+  "prompt": "The autosampler at outfall 002 died the first half of September so we only got one TSS sample instead of the two our PA permit requires. What do I enter on the eDMR for the missing sample and does that count as a violation?",
+  "assertions": [
+    "Identifies PA NODI code E (missed sample / analysis not conducted) for the missing sample",
+    "States that using E results in a reporting violation",
+    "Mentions an explanatory comment and/or the Non-Compliance Reporting Form (3800-FM-BCW0440)",
+    "Says not to use No Discharge (C) because the facility did discharge",
+    "Still reports the one sample that was taken"
+  ]
+}

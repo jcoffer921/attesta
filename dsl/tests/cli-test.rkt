@@ -32,7 +32,7 @@
 
 (define valid-input
   (jsexpr->string
-   (hasheq 'schema_version 1
+   (hasheq 'schema_version 3
            'records
            (list (hasheq 'id "r1" 'outfall 1 'Analyte "TSS" 'value "27.5" 'unit "mg/L"
                          'sample_date "2026-03-05" 'method "SM2540D")
@@ -44,7 +44,7 @@
     (run-cli (list "run" "--permit" (path->string permit-file) "--pipeline" (path->string pipeline-file))
              valid-input))
   (check-equal? code 0)
-  (check-equal? (hash-ref result 'schema_version) 1)
+  (check-equal? (hash-ref result 'schema_version) 3)
   (check-true (list? (hash-ref result 'provenance)))
   (check-true (list? (hash-ref result 'results)))
   (check-true (list? (hash-ref result 'rejections)))
@@ -70,7 +70,7 @@
 (test-case "a record rejected by the pipeline appears in rejections, not the results silently"
   (define bad-input
     (jsexpr->string
-     (hasheq 'schema_version 1
+     (hasheq 'schema_version 3
              'records
              (list (hasheq 'id "bad1" 'outfall 1 'value "27.5" 'unit "mg/L"
                            'sample_date "2026-03-05" 'method "SM2540D")))))
