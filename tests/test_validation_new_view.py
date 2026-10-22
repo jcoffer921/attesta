@@ -183,7 +183,7 @@ def test_explanation_error_shows_generic_message(org_client, org_user):
 
     body = response.content.decode()
     assert "secret path" not in body
-    assert "could not be generated" in body
+    assert "Could not generate" in body
 
 
 def test_explain_never_changes_engine_fields(org_client, org_user):

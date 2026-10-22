@@ -1,14 +1,13 @@
 {% extends "app_base.html" %}{% block app_content %}
 <div class="page-header">
   <div>
-    <p class="eyebrow">Validation</p>
     <h1>Validation runs</h1>
   </div>
-  <a class="button button-primary" href="{% url 'validation_new' %}">New run from lab CSV</a>
+  <a class="button button-primary" href="{% url 'validation_new' %}">New validation run</a>
 </div>
 <section class="card table-card">
   <div class="table-scroll">
-    <table data-table>
+    <table class="run-table" data-table>
       <thead>
         <tr><th>Run</th><th>Permit</th><th>Period</th><th>Status</th><th>Started</th><th></th></tr>
       </thead>
@@ -23,7 +22,7 @@
           <td><a href="{% url 'validation_results' run.pk %}">View results</a></td>
         </tr>
         {% empty %}
-        <tr><td colspan="6">No validation runs yet.</td></tr>
+        <tr><td colspan="6" class="empty-row">No validation runs yet. <a href="{% url 'validation_new' %}">Upload a lab CSV</a> to create the first one.</td></tr>
         {% endfor %}
       </tbody>
     </table>

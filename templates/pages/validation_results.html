@@ -1,4 +1,4 @@
-{% extends "app_base.html" %}{% block app_content %}
+{% extends "app_base.html" %}{% load validation_extras %}{% block app_content %}
 <div class="page-header">
   <div>
     <p class="eyebrow">Validation results</p>
@@ -13,8 +13,7 @@
 
 {% if run.status == "failed" %}
 <section class="card" style="padding:20px">
-  <p class="badge danger">Run failed: {{ run.error_code }}</p>
-  <p>{{ run.error_message }}</p>
+  <p class="alert alert-error" role="alert"><b>Run failed ({{ run.error_code }}).</b> Your uploaded rows were kept. {{ run.error_message }}</p>
 </section>
 {% else %}
 <section class="card table-card">
@@ -36,18 +35,18 @@
             <div class="trace-panel">
               <div class="trace-grid">
                 <div><b>Sample IDs</b><p>{{ result.sample_ids|join:", " }}</p></div>
-                <div><b>Sample values</b><p>{{ result.sample_values|join:", " }}</p></div>
-                <div><b>Computed value</b><p>{{ result.computed_value }}</p></div>
-                <div><b>Threshold</b><p>{{ result.threshold }}</p></div>
+                <div><b>Sample values</b><p>{% for v in result.sample_values %}{{ v|decimal_display }}{% if not forloop.last %}, {% endif %}{% endfor %}</p></div>
+                <div><b>Computed value</b><p>{{ result.computed_value|decimal_display }}</p></div>
+                <div><b>Threshold</b><p>{{ result.threshold|decimal_display }}</p></div>
                 <div><b>Comparison</b><p>{{ result.comparison }}</p></div>
               </div>
               <p><b>Engine reason:</b> {{ result.reason }}</p>
               {% if result.explanation %}
               <p class="ai-summary"><b>AI explanation:</b> {{ result.explanation }}</p>
               {% else %}
-              <form method="post" action="{% url 'explain_limit_result' result.pk %}">
+              <form class="explain-form" method="post" action="{% url 'explain_limit_result' result.pk %}">
                 {% csrf_token %}
-                <button class="button button-secondary button-small" type="submit">Explain</button>
+                <button type="submit">Explain this result</button>
               </form>
               {% endif %}
               {% if result.clause == "monthly-avg" %}

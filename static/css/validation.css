@@ -1,0 +1,22 @@
+/* Validation pages: form, alerts, results. Uses the tokens from base.css. */
+.alert{margin:0 0 16px;padding:12px 14px;border-radius:9px;border:1px solid;font-size:12px;line-height:1.5}
+.alert-error{background:var(--red-soft);border-color:#f3c5c5;color:#9b2c2c}
+.alert-success{background:var(--green-soft);border-color:#bfe6d3;color:#0f6b46}
+
+.run-form{max-width:520px;display:grid;gap:20px}
+.run-form .field{display:grid;gap:6px}
+.run-form label{font-size:12px;font-weight:600;color:var(--ink)}
+.run-form .hint{margin:0;font-size:11px;color:var(--muted)}
+.run-form input[type=text],.run-form select{height:40px;padding:0 12px;font-size:13px;color:var(--ink);width:100%}
+.run-form input[type=file]{font-size:12px;padding:10px;border:1.5px dashed #b9cae8;border-radius:9px;background:#f8fbff;width:100%}
+.run-form input:focus-visible,.run-form select:focus-visible{outline:2px solid var(--blue);outline-offset:1px}
+.run-form button[disabled]{opacity:.6;cursor:progress}
+.column-list{margin:6px 0 0;font-size:12px;color:var(--muted)}
+
+.run-table td,.run-table th{font-size:12px}
+.run-table td a{color:var(--blue);font-weight:600;text-decoration:underline}
+.empty-row{text-align:center;padding:36px 14px!important;color:var(--muted);white-space:normal}
+
+.trace-panel .explain-form{margin-top:8px}
+.trace-panel .explain-form button{background:none;border:0;padding:0;color:var(--blue);font-size:12px;font-weight:600;cursor:pointer;text-decoration:underline}
+.trace-panel td,.trace-grid p{font-size:13px}
