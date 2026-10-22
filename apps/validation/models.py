@@ -88,3 +88,26 @@ class RejectionEntry(models.Model):
     step = models.CharField(max_length=32)
     record_id = models.CharField(max_length=64)
     reason = models.TextField()
+
+
+class LabRecord(models.Model):
+    """One raw lab row exactly as sent to the engine, kept for every run
+    (successful or failed) so the input is never lost.
+    """
+
+    organization = models.ForeignKey(
+        "facilities.Organization", on_delete=models.CASCADE, related_name="lab_records",
+    )
+    run = models.ForeignKey(ValidationRun, related_name="lab_records", on_delete=models.CASCADE)
+    # 1-based data row in the source CSV.
+    row_number = models.PositiveIntegerField()
+    record_id = models.CharField(max_length=64)
+    data = models.JSONField()
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=["run", "record_id"], name="unique_lab_record_per_run"),
+        ]
+
+    def __str__(self):
+        return f"LabRecord({self.record_id}, row {self.row_number})"

@@ -17,6 +17,7 @@ from django.conf import settings
 from django.db import transaction
 
 from apps.validation.models import (
+    LabRecord,
     LimitResult,
     ProvenanceEntry,
     RejectionEntry,
@@ -34,6 +35,8 @@ class EngineError(Exception):
     def __init__(self, code: str, message: str):
         self.code = code
         self.message = message
+        # The persisted failed ValidationRun, when one was created.
+        self.run = None
         super().__init__(f"{code}: {message}")
 
 
@@ -71,39 +74,64 @@ def _sha256_of(path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+def _lab_records(run, organization, records, row_numbers) -> list[LabRecord]:
+    if not row_numbers:
+        return []
+    return [
+        LabRecord(organization=organization, run=run, row_number=n, record_id=rec["id"], data=rec)
+        for rec, n in zip(records, row_numbers)
+    ]
+
+
 def _fail(*, organization, permit_slug, pipeline_slug, period, code, message,
-          permit_sha=None, pipeline_sha=None, schema_version=None) -> ValidationRun:
-    """Persist a failed ValidationRun with no child rows and raise EngineError."""
+          permit_sha=None, pipeline_sha=None, schema_version=None,
+          records=None, row_numbers=None) -> ValidationRun:
+    """Persist a failed ValidationRun (plus its raw LabRecords, if any) with
+    no result rows and raise EngineError carrying that run.
+    """
     from django.utils import timezone
 
-    run = ValidationRun.objects.create(
-        organization=organization,
-        permit_slug=permit_slug,
-        pipeline_slug=pipeline_slug,
-        permit_file_sha256=permit_sha or "",
-        pipeline_file_sha256=pipeline_sha or "",
-        period=period,
-        status="failed",
-        schema_version=schema_version,
-        error_code=code,
-        error_message=message,
-        finished_at=timezone.now(),
-    )
-    raise EngineError(code, message)
+    with transaction.atomic():
+        run = ValidationRun.objects.create(
+            organization=organization,
+            permit_slug=permit_slug,
+            pipeline_slug=pipeline_slug,
+            permit_file_sha256=permit_sha or "",
+            pipeline_file_sha256=pipeline_sha or "",
+            period=period,
+            status="failed",
+            schema_version=schema_version,
+            error_code=code,
+            error_message=message,
+            finished_at=timezone.now(),
+        )
+        LabRecord.objects.bulk_create(_lab_records(run, organization, records, row_numbers))
+    exc = EngineError(code, message)
+    exc.run = run
+    raise exc
 
 
-def run_validation(*, organization, permit_slug: str, pipeline_slug: str, records: list, period: str | None = None) -> ValidationRun:
+def available_permit_slugs() -> list[str]:
+    """Slugs of the permit definitions on disk; no subprocess."""
+    return sorted(p.stem for p in (settings.DSL_ROOT / "permit/permits").glob("*.rkt"))
+
+
+def run_validation(*, organization, permit_slug: str, pipeline_slug: str, records: list,
+                   period: str | None = None, row_numbers: list[int] | None = None) -> ValidationRun:
     """Invoke `racket dsl/main.rkt run`, validate its JSON contract, and
     persist the outcome atomically.
 
     On success: one ValidationRun(status="success") plus its LimitResults,
     ProvenanceEntries and RejectionEntries, all in one transaction.
 
-    On any failure (bad slug, nonzero exit, timeout, malformed JSON, wrong
-    schema_version): one ValidationRun(status="failed") with no child rows,
-    and EngineError is raised so the caller sees both a DB record and an
-    exception.
+    On any failure (nonzero exit, timeout, malformed JSON, wrong
+    schema_version): one ValidationRun(status="failed") with no result rows,
+    and EngineError (with the run on `exc.run`) is raised. When
+    `row_numbers` is given, the raw LabRecords are stored with the run in
+    both cases.
     """
+    if row_numbers is not None and len(row_numbers) != len(records):
+        raise ValueError("row_numbers must be the same length as records")
     permit_path = _resolve_definition_file(permit_slug, "permit/permits", "--permit")
     pipeline_path = _resolve_definition_file(pipeline_slug, "pipeline/pipelines", "--pipeline")
     permit_sha = _sha256_of(permit_path)
@@ -124,6 +152,7 @@ def run_validation(*, organization, permit_slug: str, pipeline_slug: str, record
     common_fail_kwargs = dict(
         organization=organization, permit_slug=permit_slug, pipeline_slug=pipeline_slug, period=period,
         permit_sha=permit_sha, pipeline_sha=pipeline_sha,
+        records=records, row_numbers=row_numbers,
     )
 
     try:
@@ -212,6 +241,7 @@ def run_validation(*, organization, permit_slug: str, pipeline_slug: str, record
             )
             for rej in payload["rejections"]
         ])
+        LabRecord.objects.bulk_create(_lab_records(run, organization, records, row_numbers))
 
     return run
 
