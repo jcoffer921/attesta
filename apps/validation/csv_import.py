@@ -20,6 +20,13 @@ class LabCsvError(Exception):
     """Raised with a message that is safe to show to the user."""
 
 
+def _numbered_rows(reader):
+    # Number by file line (header is line 1), so a blank line mid-file keeps
+    # later rows matching what the user sees in their spreadsheet/editor.
+    for row in reader:
+        yield reader.line_num - 1, row
+
+
 def parse_lab_csv(file_bytes: bytes) -> tuple[list[dict], list[int]]:
     """Return (records, row_numbers); row_numbers are 1-based data rows."""
     if len(file_bytes) > MAX_BYTES:
@@ -42,7 +49,11 @@ def parse_lab_csv(file_bytes: bytes) -> tuple[list[dict], list[int]]:
     records: list[dict] = []
     row_numbers: list[int] = []
     first_row_of_id: dict[str, int] = {}
-    for row_number, row in enumerate(reader, start=1):
+    try:
+        rows = list(_numbered_rows(reader))
+    except csv.Error as exc:
+        raise LabCsvError(f"row {reader.line_num}: could not parse CSV ({exc}).")
+    for row_number, row in rows:
         if all(not (v or "").strip() for v in row.values() if not isinstance(v, list)):
             continue
         record = {h: (row.get(h) or "").strip() for h in REQUIRED_HEADERS}

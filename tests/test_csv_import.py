@@ -87,3 +87,16 @@ def test_empty_file_rejected():
         parse_lab_csv(b"")
     with pytest.raises(LabCsvError, match="no data rows"):
         parse_lab_csv(HEADER.encode() + b"\n")
+
+
+def test_oversized_field_is_a_lab_csv_error_not_a_crash():
+    big = "x" * 200_000
+    with pytest.raises(LabCsvError, match="row 1"):
+        parse_lab_csv(csv_bytes(f"r1,1,TSS,{big},mg/L,d,M"))
+
+
+def test_row_numbers_follow_file_lines_after_a_blank_line():
+    records, row_numbers = parse_lab_csv(HEADER.encode() + b"\nr1,1,TSS,1,mg/L,d,M\n\nr2,1,TSS,1,mg/L,d,M\n")
+    assert row_numbers == [1, 3]
+    with pytest.raises(LabCsvError, match="row 3"):
+        parse_lab_csv(HEADER.encode() + b"\nr1,1,TSS,1,mg/L,d,M\n\nr2,1,,1,mg/L,d,M\n")

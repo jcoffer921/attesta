@@ -163,6 +163,11 @@ def run_validation(*, organization, permit_slug: str, pipeline_slug: str, record
             timeout=settings.RACKET_TIMEOUT_SECONDS,
             check=False,
         )
+    except OSError as exc:
+        # Missing/unlaunchable RACKET_EXECUTABLE: keep the run and raw input.
+        _fail(code="engine-unavailable",
+              message=f"could not start the rule engine: {type(exc).__name__}",
+              **common_fail_kwargs)
     except subprocess.TimeoutExpired:
         _fail(code="timeout",
               message=f"racket did not exit within {settings.RACKET_TIMEOUT_SECONDS}s",

@@ -214,3 +214,10 @@ def test_results_page_shows_explain_button_only_for_rows_without_explanation(org
     body = org_client.get(reverse("validation_results", args=[run.pk])).content.decode()
     assert reverse("explain_limit_result", args=[plain.pk]) in body
     assert reverse("explain_limit_result", args=[explained.pk]) not in body
+
+
+def test_non_ascii_digit_period_rejected(org_client):
+    with patch("apps.validation.views.run_validation") as rv:
+        response = org_client.post(reverse("validation_new"), form(period="２０２６-03"))
+    assert response.status_code == 400
+    rv.assert_not_called()

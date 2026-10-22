@@ -195,3 +195,15 @@ def test_available_permit_slugs_lists_pa0000000():
     from apps.validation.services import available_permit_slugs
 
     assert "pa0000000" in available_permit_slugs()
+
+
+@pytest.mark.django_db
+def test_missing_racket_executable_persists_failed_run_with_lab_records(org):
+    with patch("apps.validation.services.subprocess.run", side_effect=FileNotFoundError("racket")):
+        with pytest.raises(EngineError) as exc_info:
+            run_validation(organization=org, permit_slug=PERMIT_SLUG, pipeline_slug=PIPELINE_SLUG,
+                           records=RECORDS, row_numbers=[1])
+
+    assert exc_info.value.code == "engine-unavailable"
+    run = exc_info.value.run
+    assert run.status == "failed" and run.lab_records.count() == 1

@@ -22,7 +22,7 @@ from apps.validation.services import (
 )
 
 LAB_CSV_PIPELINE_SLUG = "lab-csv-import"
-_PERIOD_RE = re.compile(r"^\d{4}-(0[1-9]|1[0-2])$")
+_PERIOD_RE = re.compile(r"^[0-9]{4}-(0[1-9]|1[0-2])$")
 
 # Status -> CSS badge class. Fixed mapping from the engine's own status
 # string only -- never computed or restyled from AI text.
