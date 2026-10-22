@@ -2,6 +2,7 @@
 ;; Shared, pure helpers used by both DSLs. No I/O, no randomness, no clock reads.
 
 (provide parse-exact-decimal
+         exact->decimal-string
          month-of
          days-in-month
          weeks-in-month
@@ -30,6 +31,33 @@
   (define denom (expt 10 (string-length frac-part)))
   (define magnitude (/ numerator denom))
   (if (string=? sign "-") (- magnitude) magnitude))
+
+;; exact->decimal-string : exact-rational -> string
+;; Inverse of parse-exact-decimal: writes an exact rational as a plain
+;; decimal ("1/2" -> "0.5"), never through flonums or rounding. Racket's
+;; number->string would give "1/2", which parse-exact-decimal rejects, so any
+;; value the pipeline writes back into a record goes through here. A rational
+;; with no finite decimal expansion (1/3) is an error, not a rounded value.
+(define (exact->decimal-string q)
+  (unless (and (rational? q) (exact? q))
+    (error 'exact->decimal-string "expected an exact rational, got: ~e" q))
+  (define den (denominator q))
+  (define digits
+    (let loop ([d den] [twos 0] [fives 0])
+      (cond [(even? d) (loop (quotient d 2) (+ twos 1) fives)]
+            [(zero? (remainder d 5)) (loop (quotient d 5) twos (+ fives 1))]
+            [(= d 1) (max twos fives)]
+            [else (error 'exact->decimal-string "no finite decimal expansion: ~a" q)])))
+  (define scaled (abs (* q (expt 10 digits))))
+  (define raw (number->string scaled))
+  (define padded
+    (if (<= (string-length raw) digits)
+        (string-append (make-string (- (+ digits 1) (string-length raw)) #\0) raw)
+        raw))
+  (define int-len (- (string-length padded) digits))
+  (string-append (if (negative? q) "-" "")
+                 (substring padded 0 int-len)
+                 (if (zero? digits) "" (string-append "." (substring padded int-len)))))
 
 ;; month-of : "YYYY-MM-DD" -> "YYYY-MM"
 (define (month-of date-str)
