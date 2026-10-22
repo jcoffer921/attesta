@@ -106,8 +106,33 @@
   (check-equal? (length finals) 1)
   (define f (car finals))
   (check-equal? (hash-ref f 'parameter) "TSS")
-  (check-equal? (hash-ref f 'value) "9/200")
+  (check-equal? (hash-ref f 'value) "0.045")
   (check-equal? (hash-ref f 'unit) "mg/L")
   (check-false (hash-ref f 'non_detect))
   (check-equal? (length prov) 4)
   (check-equal? (length rej) 0))
+
+;; --- fractional values must stay plain decimals (the evaluator parses them) ---
+(test-case "non-detect with a fractional reporting limit keeps a decimal string"
+  (define pd (pipeline "p" (non-detect (marker "<") (treat-as report-limit))))
+  (define-values (finals prov rej)
+    (run-pipeline pd (list (rec 'id "r1" 'value "<0.5"))))
+  (check-equal? (hash-ref (car finals) 'value) "0.5")
+  (check-true (hash-ref (car finals) 'non_detect))
+  (check-false (regexp-match? #rx"/" (provenance-entry-note (car prov)))))
+
+(test-case "convert-units yields a decimal string when the result is fractional"
+  (define pd (pipeline "p" (convert-units ug/L -> mg/L)))
+  (define-values (finals prov rej)
+    (run-pipeline pd (list (rec 'id "r1" 'value "500" 'unit "ug/L"))))
+  (check-equal? (hash-ref (car finals) 'value) "0.5")
+  (check-equal? (hash-ref (car finals) 'unit) "mg/L"))
+
+(test-case "a fractional non-detect in ug/L converts then evaluates as a decimal"
+  (define pd (pipeline "p"
+               (convert-units ug/L -> mg/L)
+               (non-detect (marker "<") (treat-as report-limit))))
+  (define-values (finals prov rej)
+    (run-pipeline pd (list (rec 'id "r1" 'value "<1500" 'unit "ug/L"))))
+  (check-equal? (hash-ref (car finals) 'value) "1.5")
+  (check-true (hash-ref (car finals) 'non_detect)))

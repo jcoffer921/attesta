@@ -111,10 +111,10 @@
         (mk-reject name rec (~a "no conversion known from " from-unit " to " to-unit))]
        [else
         (define converted (* magnitude factor))
-        (define new-valstr (string-append prefix (number->string converted)))
+        (define new-valstr (string-append prefix (exact->decimal-string converted)))
         (define new-rec (hash-set (hash-set rec 'value new-valstr) 'unit (symbol->string to-unit)))
         (mk-ok name rec new-rec
-               (~a "converted " magnitude-str " " from-unit " to " (number->string converted) " " to-unit))])]
+               (~a "converted " magnitude-str " " from-unit " to " (exact->decimal-string converted) " " to-unit))])]
     [else
      (mk-ok name rec rec (~a "unit " cur-unit-str " did not match " from-unit "; left unchanged"))]))
 
@@ -131,9 +131,9 @@
        (case treat-as
          [(zero) 0]
          [(report-limit) magnitude]))
-     (define new-rec (hash-set (hash-set rec 'value (number->string new-value)) 'non_detect #t))
+     (define new-rec (hash-set (hash-set rec 'value (exact->decimal-string new-value)) 'non_detect #t))
      (mk-ok name rec new-rec
-            (~a "non-detect value " valstr " treated as " treat-as " -> " (number->string new-value)
+            (~a "non-detect value " valstr " treated as " treat-as " -> " (exact->decimal-string new-value)
                 (let ([b (step:non-detect-basis step)]) (if b (~a " (basis: " b ")") ""))))]
     [else
      (define new-rec (hash-set rec 'non_detect #f))

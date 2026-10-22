@@ -86,3 +86,19 @@
     (run-cli (list "describe" "--permit" (path->string main-rkt)) ""))
   (check-not-equal? code 0)
   (check-true (hash? (hash-ref result 'error #f))))
+
+(test-case "run: a fractional non-detect ('<0.5') is evaluated, not an engine error"
+  (define input
+    (jsexpr->string
+     (hasheq 'schema_version 3
+             'records
+             (list (hasheq 'id "r1" 'outfall 1 'Analyte "TSS" 'value "<0.5" 'unit "mg/L"
+                           'sample_date "2026-03-05" 'method "SM2540D")
+                   (hasheq 'id "r2" 'outfall 1 'Analyte "TSS" 'value "500" 'unit "ug/L"
+                           'sample_date "2026-03-12" 'method "SM2540D")))))
+  (define-values (result code)
+    (run-cli (list "run" "--permit" (path->string permit-file) "--pipeline" (path->string pipeline-file))
+             input))
+  (check-equal? code 0)
+  (check-false (hash-has-key? result 'error))
+  (check-equal? (length (hash-ref result 'rejections)) 0))
