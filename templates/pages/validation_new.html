@@ -1,27 +1,43 @@
 {% extends "app_base.html" %}{% block app_content %}
 <div class="page-header">
   <div>
-    <p class="eyebrow">Validation</p>
     <h1>New validation run</h1>
-    <p>Upload a lab CSV with columns <b>id, outfall, Analyte, value, unit, sample_date, method</b> (UTF-8, up to 1 MB / 5,000 rows). The rule engine decides compliance.</p>
+    <p>Upload a lab CSV, choose the permit and the month, and you'll get a pass or exceedance result for every limit.</p>
   </div>
 </div>
 {% if org_only %}
 <section class="card" style="padding:20px"><p>Lab CSV uploads are for organization users only.</p></section>
 {% else %}
-<section class="card" style="padding:20px">
-  {% if error %}<p class="badge danger" role="alert">{{ error }}</p>{% endif %}
-  <form method="post" enctype="multipart/form-data">
+<section class="card" style="padding:24px">
+  {% if error %}<p class="alert alert-error" role="alert">{{ error }}</p>{% endif %}
+  <form class="run-form" method="post" enctype="multipart/form-data" data-run-form>
     {% csrf_token %}
-    <p><label>Lab CSV<br><input type="file" name="csv_file" accept=".csv,text/csv" required></label></p>
-    <p><label>Permit<br>
-      <select name="permit_slug" required>
+    <div class="field">
+      <label for="csv_file">Lab CSV</label>
+      <input id="csv_file" type="file" name="csv_file" accept=".csv,text/csv" required aria-describedby="csv-hint">
+      <p class="hint" id="csv-hint">UTF-8, up to 1 MB and 5,000 rows. Required columns: <span class="column-list">id, outfall, Analyte, value, unit, sample_date, method</span></p>
+    </div>
+    <div class="field">
+      <label for="permit_slug">Permit</label>
+      <select id="permit_slug" name="permit_slug" required>
         {% for slug in permit_slugs %}<option value="{{ slug }}"{% if slug == selected_permit %} selected{% endif %}>{{ slug }}</option>{% endfor %}
-      </select></label></p>
-    <p><label>Period (YYYY-MM)<br>
-      <input type="text" name="period" value="{{ period }}" required pattern="\d{4}-(0[1-9]|1[0-2])" placeholder="2026-03"></label></p>
-    <button class="button button-primary" type="submit">Run validation</button>
+      </select>
+    </div>
+    <div class="field">
+      <label for="period">Month</label>
+      <input id="period" type="text" name="period" value="{{ period }}" required inputmode="numeric" pattern="[0-9]{4}-(0[1-9]|1[0-2])" placeholder="2026-03" aria-describedby="period-hint">
+      <p class="hint" id="period-hint">Year and month, like 2026-03.</p>
+    </div>
+    <div><button class="button button-primary" type="submit">Run validation</button></div>
   </form>
 </section>
+<script>
+document.querySelectorAll('[data-run-form]').forEach(function (f) {
+  f.addEventListener('submit', function () {
+    var b = f.querySelector('button[type=submit]');
+    b.disabled = true; b.textContent = 'Running validation…';
+  });
+});
+</script>
 {% endif %}
 {% endblock %}

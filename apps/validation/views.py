@@ -37,6 +37,14 @@ STATUS_BADGE_CLASSES = {
 }
 
 
+# Rows that need attention come first; passes and report-only last.
+_STATUS_ORDER = ["exceedance", "unit-error", "review-required", "under-sampled", "missing-data"]
+
+
+def _status_rank(status):
+    return _STATUS_ORDER.index(status) if status in _STATUS_ORDER else len(_STATUS_ORDER)
+
+
 def badge_class_for(status):
     return STATUS_BADGE_CLASSES.get(status, "badge neutral")
 
@@ -153,7 +161,10 @@ def validation_results(request, run_id):
     fields.
     """
     run = get_object_or_404(_visible_runs(request.user), pk=run_id)
-    results = list(run.results.all().order_by('outfall', 'parameter', 'clause'))
+    results = sorted(
+        run.results.all().order_by('outfall', 'parameter', 'clause'),
+        key=lambda r: _status_rank(r.status),
+    )
     for result in results:
         result.badge_class = badge_class_for(result.status)
     chart_series = _monthly_avg_chart_series(run, results) if run.status == 'success' else {}
@@ -265,7 +276,7 @@ def validation_new(request):
         return invalid("That permit could not be used.")
     except EngineError as exc:
         if exc.run is None:
-            return invalid("The rule engine could not run. Try again.")
+            return invalid("The rule engine could not start. Try again, or contact support if it keeps happening.")
         return redirect('validation_results', run_id=exc.run.pk)
     return redirect('validation_results', run_id=run.pk)
 
@@ -281,7 +292,7 @@ def explain_limit_result(request, result_id):
     try:
         explain_result(result.pk)
     except ExplanationError:
-        messages.error(request, "An explanation could not be generated for this result. Try again later.")
+        messages.error(request, "Could not generate an explanation for this result. Try again later.")
     else:
         messages.success(request, "Explanation added.")
     return redirect('validation_results', run_id=result.run_id)
