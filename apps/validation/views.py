@@ -4,11 +4,15 @@ from fractions import Fraction
 from django.contrib.auth.decorators import login_required
 import re
 
+from django.contrib import messages
 from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect, render
+from django.views.decorators.http import require_POST
+
+from apps.ai_assist.services import ExplanationError, explain_result
 
 from apps.validation.csv_import import LabCsvError, parse_lab_csv
-from apps.validation.models import ValidationRun
+from apps.validation.models import LimitResult, ValidationRun
 from apps.validation.services import (
     EngineError,
     InvalidSlugError,
@@ -264,3 +268,20 @@ def validation_new(request):
             return invalid("The rule engine could not run. Try again.")
         return redirect('validation_results', run_id=exc.run.pk)
     return redirect('validation_results', run_id=run.pk)
+
+
+@login_required(login_url='login')
+@require_POST
+def explain_limit_result(request, result_id):
+    """Ask Claude to explain one stored result. explain_result writes only
+    the explanation fields; the flash text is generic so raw Claude or
+    filesystem text never reaches the page.
+    """
+    result = get_object_or_404(LimitResult.objects.filter(run__in=_visible_runs(request.user)), pk=result_id)
+    try:
+        explain_result(result.pk)
+    except ExplanationError:
+        messages.error(request, "An explanation could not be generated for this result. Try again later.")
+    else:
+        messages.success(request, "Explanation added.")
+    return redirect('validation_results', run_id=result.run_id)

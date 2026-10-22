@@ -44,6 +44,11 @@
               <p><b>Engine reason:</b> {{ result.reason }}</p>
               {% if result.explanation %}
               <p class="ai-summary"><b>AI explanation:</b> {{ result.explanation }}</p>
+              {% else %}
+              <form method="post" action="{% url 'explain_limit_result' result.pk %}">
+                {% csrf_token %}
+                <button class="button button-secondary button-small" type="submit">Explain</button>
+              </form>
               {% endif %}
               {% if result.clause == "monthly-avg" %}
               {% with key=result.outfall|stringformat:"s"|add:"-"|add:result.parameter %}

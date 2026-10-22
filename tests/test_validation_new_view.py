@@ -134,3 +134,83 @@ def test_run_list_scoped_to_org_and_admin_sees_all(org_client, org_user, admin_u
     body = client.get(reverse("validation_run_list")).content.decode()
     assert all(s in body for s in ("mine-permit", "other-permit", "legacy-permit"))
     assert theirs.pk and legacy.pk
+
+
+# --- on-demand explanation ---------------------------------------------------
+
+from apps.ai_assist.services import ExplanationError  # noqa: E402
+from apps.validation.models import LimitResult  # noqa: E402
+
+
+def make_limit_result(organization, **overrides):
+    run = ValidationRun.objects.create(organization=organization, permit_slug="pa0000000",
+                                       pipeline_slug="lab-csv-import", status="success", schema_version=3)
+    fields = dict(run=run, outfall=1, parameter="TSS", clause="monthly-avg", sample_ids=["r1"],
+                  sample_values=["27.5"], computed_value="27.5", threshold="30",
+                  comparison="mean <= threshold", status="pass", reason="monthly-avg is within limits.")
+    fields.update(overrides)
+    return LimitResult.objects.create(**fields)
+
+
+def test_explain_post_calls_service_and_redirects(org_client, org_user):
+    result = make_limit_result(org_user.organization)
+    with patch("apps.validation.views.explain_result", return_value="ok") as svc:
+        response = org_client.post(reverse("explain_limit_result", args=[result.pk]))
+
+    assert response.status_code == 302
+    assert response.url == reverse("validation_results", args=[result.run_id])
+    svc.assert_called_once_with(result.pk)
+
+
+def test_explain_get_not_allowed(org_client, org_user):
+    result = make_limit_result(org_user.organization)
+    assert org_client.get(reverse("explain_limit_result", args=[result.pk])).status_code == 405
+
+
+def test_explain_cross_org_and_legacy_result_404(org_client):
+    other = Organization.objects.create(name="Other", slug="other")
+    with patch("apps.validation.views.explain_result") as svc:
+        for org in (other, None):
+            result = make_limit_result(org)
+            assert org_client.post(reverse("explain_limit_result", args=[result.pk])).status_code == 404
+    svc.assert_not_called()
+
+
+def test_explanation_error_shows_generic_message(org_client, org_user):
+    result = make_limit_result(org_user.organization)
+    with patch("apps.validation.views.explain_result", side_effect=ExplanationError(r"secret path C:\x")):
+        response = org_client.post(reverse("explain_limit_result", args=[result.pk]), follow=True)
+
+    body = response.content.decode()
+    assert "secret path" not in body
+    assert "could not be generated" in body
+
+
+def test_explain_never_changes_engine_fields(org_client, org_user):
+    result = make_limit_result(org_user.organization)
+    fields = ("outfall", "parameter", "clause", "sample_ids", "sample_values", "computed_value",
+              "threshold", "comparison", "status", "reason")
+    before = {f: getattr(result, f) for f in fields}
+    good = json.dumps({
+        "explanation": "TSS averaged 27.5 against a limit of 30, so it stayed within the monthly average limit.",
+        "refs": ["cite:monthly-avg"],
+    })
+    with patch("apps.ai_assist.services._call_claude", return_value=good):
+        org_client.post(reverse("explain_limit_result", args=[result.pk]))
+
+    result.refresh_from_db()
+    assert {f: getattr(result, f) for f in fields} == before
+    assert result.explanation
+
+
+def test_results_page_shows_explain_button_only_for_rows_without_explanation(org_client, org_user):
+    run = make_limit_result(org_user.organization).run
+    explained = LimitResult.objects.create(
+        run=run, outfall=1, parameter="TSS", clause="daily-max", sample_ids=["r1"], sample_values=["27.5"],
+        computed_value="27.5", threshold="45", comparison="max <= threshold", status="pass",
+        reason="ok", explanation="Already explained.")
+    plain = run.results.exclude(pk=explained.pk).get()
+
+    body = org_client.get(reverse("validation_results", args=[run.pk])).content.decode()
+    assert reverse("explain_limit_result", args=[plain.pk]) in body
+    assert reverse("explain_limit_result", args=[explained.pk]) not in body
