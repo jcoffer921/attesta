@@ -127,3 +127,83 @@ def test_invalid_slug_is_rejected_before_any_subprocess_call(org):
             run_validation(organization=org, permit_slug="../../etc/passwd", pipeline_slug=PIPELINE_SLUG, records=RECORDS)
     mock_run.assert_not_called()
     assert counts() == (0, 0, 0, 0)
+
+
+def _success_body():
+    return json.dumps({"schema_version": 3, "results": [], "provenance": [], "rejections": []})
+
+
+@pytest.mark.django_db
+def test_success_persists_lab_records_matching_sent_records(org):
+    from apps.validation.models import LabRecord
+
+    with patch("apps.validation.services.subprocess.run", return_value=completed(0, stdout=_success_body())):
+        run = run_validation(organization=org, permit_slug=PERMIT_SLUG, pipeline_slug=PIPELINE_SLUG,
+                             records=RECORDS, row_numbers=[1])
+
+    lab = LabRecord.objects.get()
+    assert lab.run == run
+    assert lab.organization == org
+    assert lab.data == RECORDS[0]
+    assert lab.record_id == "r1"
+    assert lab.row_number == 1
+
+
+@pytest.mark.django_db
+def test_failed_run_still_persists_lab_records(org):
+    with patch("apps.validation.services.subprocess.run", return_value=completed(1, stdout="boom")):
+        with pytest.raises(EngineError):
+            run_validation(organization=org, permit_slug=PERMIT_SLUG, pipeline_slug=PIPELINE_SLUG,
+                           records=RECORDS, row_numbers=[1])
+
+    run = ValidationRun.objects.get()
+    assert run.status == "failed"
+    assert run.lab_records.count() == len(RECORDS)
+
+
+@pytest.mark.django_db
+def test_engine_error_carries_failed_run(org):
+    with patch("apps.validation.services.subprocess.run", return_value=completed(1, stdout="boom")):
+        with pytest.raises(EngineError) as exc_info:
+            run_validation(organization=org, permit_slug=PERMIT_SLUG, pipeline_slug=PIPELINE_SLUG, records=RECORDS)
+
+    assert exc_info.value.run.status == "failed"
+
+
+@pytest.mark.django_db
+def test_row_numbers_length_mismatch_raises_before_subprocess(org):
+    with patch("apps.validation.services.subprocess.run") as run_mock:
+        with pytest.raises(ValueError):
+            run_validation(organization=org, permit_slug=PERMIT_SLUG, pipeline_slug=PIPELINE_SLUG,
+                           records=RECORDS, row_numbers=[1, 2])
+
+    run_mock.assert_not_called()
+    assert ValidationRun.objects.count() == 0
+
+
+@pytest.mark.django_db
+def test_omitting_row_numbers_creates_no_lab_records(org):
+    from apps.validation.models import LabRecord
+
+    with patch("apps.validation.services.subprocess.run", return_value=completed(0, stdout=_success_body())):
+        run_validation(organization=org, permit_slug=PERMIT_SLUG, pipeline_slug=PIPELINE_SLUG, records=RECORDS)
+
+    assert LabRecord.objects.count() == 0
+
+
+def test_available_permit_slugs_lists_pa0000000():
+    from apps.validation.services import available_permit_slugs
+
+    assert "pa0000000" in available_permit_slugs()
+
+
+@pytest.mark.django_db
+def test_missing_racket_executable_persists_failed_run_with_lab_records(org):
+    with patch("apps.validation.services.subprocess.run", side_effect=FileNotFoundError("racket")):
+        with pytest.raises(EngineError) as exc_info:
+            run_validation(organization=org, permit_slug=PERMIT_SLUG, pipeline_slug=PIPELINE_SLUG,
+                           records=RECORDS, row_numbers=[1])
+
+    assert exc_info.value.code == "engine-unavailable"
+    run = exc_info.value.run
+    assert run.status == "failed" and run.lab_records.count() == 1

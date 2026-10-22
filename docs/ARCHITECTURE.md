@@ -151,6 +151,26 @@ with an `evidence_links` column linking straight to Results / Provenance /
 Permit rules for each run — that's the working front door until a small
 dedicated run-list page (with a single sidebar link) replaces it.
 
+## Lab CSV intake (`apps/validation/csv_import.py`, `views.validation_new`)
+
+Org users upload a lab CSV at `validation/runs/new/` with a permit and a
+`YYYY-MM` period. Flow:
+
+1. `parse_lab_csv` (strict, UTF-8/BOM, 1 MB / 5,000 rows, headers
+   `id, outfall, Analyte, value, unit, sample_date, method`) returns the
+   record dicts plus 1-based row numbers. It does no unit, date, or
+   non-detect interpretation; values such as `<0.5` pass through verbatim.
+2. `run_validation(..., pipeline_slug="lab-csv-import", row_numbers=...)`
+   calls the engine and, in the same transaction as the `ValidationRun`
+   (success or failure), stores one `LabRecord` per row: `row_number`,
+   `record_id`, and `data`, the exact dict sent to the engine.
+3. The user is redirected to `validation_results`. An engine failure
+   redirects to the failed run's page, with its `LabRecord`s kept.
+
+Explanations are on demand: the results page POSTs to
+`explain_limit_result`, which calls `explain_result` and so writes only the
+explanation fields.
+
 ## What's deliberately out of scope so far
 
 - No UI for authoring or editing permit/pipeline DSL definitions, and no

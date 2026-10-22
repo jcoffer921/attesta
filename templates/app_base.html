@@ -28,6 +28,7 @@
       <a class="nav-item {% if active == 'evidence' %}active{% endif %}" href="{% url 'evidence' %}"><svg><use href="#i-file"/></svg><span>Evidence</span></a>
       <a class="nav-item {% if active == 'ai_review' %}active{% endif %}" href="{% url 'ai_review' %}"><svg><use href="#i-spark"/></svg><span>AI Review</span></a>
       <a class="nav-item {% if active == 'reports' %}active{% endif %}" href="{% url 'reports' %}"><svg><use href="#i-chart"/></svg><span>Reports</span></a>
+      <a class="nav-item {% if active == 'validation_runs' %}active{% endif %}" href="{% url 'validation_run_list' %}"><svg><use href="#i-check"/></svg><span>Validation</span></a>
       <a class="nav-item {% if active == 'audit' %}active{% endif %}" href="{% url 'audit_trail' %}"><svg><use href="#i-clock"/></svg><span>Audit Trail</span></a>
       <a class="nav-item {% if active == 'settings' %}active{% endif %}" href="{% url 'settings' %}"><svg><use href="#i-settings"/></svg><span>Settings</span></a>
       {% endif %}
@@ -67,7 +68,9 @@
         <div class="dropdown" data-dropdown><a href="{% url 'settings' %}">Profile settings</a><a href="{% url 'logout' %}">Sign out</a></div>
       </div>
     </header>
-    <main class="content">{% block app_content %}{% endblock %}</main>
+    <main class="content">
+      {% for message in messages %}<p class="badge neutral" role="status">{{ message }}</p>{% endfor %}
+      {% block app_content %}{% endblock %}</main>
   </div>
 </div>
 <div class="drawer-backdrop" data-drawer-close></div>

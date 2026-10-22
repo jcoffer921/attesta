@@ -1,0 +1,27 @@
+{% extends "app_base.html" %}{% block app_content %}
+<div class="page-header">
+  <div>
+    <p class="eyebrow">Validation</p>
+    <h1>New validation run</h1>
+    <p>Upload a lab CSV with columns <b>id, outfall, Analyte, value, unit, sample_date, method</b> (UTF-8, up to 1 MB / 5,000 rows). The rule engine decides compliance.</p>
+  </div>
+</div>
+{% if org_only %}
+<section class="card" style="padding:20px"><p>Lab CSV uploads are for organization users only.</p></section>
+{% else %}
+<section class="card" style="padding:20px">
+  {% if error %}<p class="badge danger" role="alert">{{ error }}</p>{% endif %}
+  <form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    <p><label>Lab CSV<br><input type="file" name="csv_file" accept=".csv,text/csv" required></label></p>
+    <p><label>Permit<br>
+      <select name="permit_slug" required>
+        {% for slug in permit_slugs %}<option value="{{ slug }}"{% if slug == selected_permit %} selected{% endif %}>{{ slug }}</option>{% endfor %}
+      </select></label></p>
+    <p><label>Period (YYYY-MM)<br>
+      <input type="text" name="period" value="{{ period }}" required pattern="\d{4}-(0[1-9]|1[0-2])" placeholder="2026-03"></label></p>
+    <button class="button button-primary" type="submit">Run validation</button>
+  </form>
+</section>
+{% endif %}
+{% endblock %}
