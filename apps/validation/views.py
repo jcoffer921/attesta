@@ -2,11 +2,23 @@ from collections import defaultdict
 from fractions import Fraction
 
 from django.contrib.auth.decorators import login_required
-from django.http import Http404
-from django.shortcuts import get_object_or_404, render
+import re
 
+from django.http import Http404
+from django.shortcuts import get_object_or_404, redirect, render
+
+from apps.validation.csv_import import LabCsvError, parse_lab_csv
 from apps.validation.models import ValidationRun
-from apps.validation.services import EngineError, InvalidSlugError, describe_permit
+from apps.validation.services import (
+    EngineError,
+    InvalidSlugError,
+    available_permit_slugs,
+    describe_permit,
+    run_validation,
+)
+
+LAB_CSV_PIPELINE_SLUG = "lab-csv-import"
+_PERIOD_RE = re.compile(r"^\d{4}-(0[1-9]|1[0-2])$")
 
 # Status -> CSS badge class. Fixed mapping from the engine's own status
 # string only -- never computed or restyled from AI text.
@@ -184,3 +196,71 @@ def provenance_timeline(request, run_id):
             'page_title': f'Provenance — {run.permit_slug}',
         },
     )
+
+
+@login_required(login_url='login')
+def validation_run_list(request):
+    runs = _visible_runs(request.user).order_by('-started_at', '-pk')
+    return render(
+        request,
+        'pages/validation_run_list.html',
+        {'runs': runs, 'active': 'validation_runs', 'page_title': 'Validation runs'},
+    )
+
+
+@login_required(login_url='login')
+def validation_new(request):
+    """Lab CSV + permit + period -> persisted ValidationRun.
+
+    This view only moves the upload into the engine's record shape; the
+    engine decides every status. Org users only: a run must belong to an
+    organization.
+    """
+    organization = request.user.organization
+    context = {
+        'permit_slugs': available_permit_slugs(),
+        'active': 'validation_runs',
+        'page_title': 'New validation run',
+        'org_only': organization is None,
+        'selected_permit': request.POST.get('permit_slug', ''),
+        'period': request.POST.get('period', ''),
+    }
+    if organization is None:
+        return render(request, 'pages/validation_new.html', context,
+                      status=403 if request.method == 'POST' else 200)
+    if request.method != 'POST':
+        return render(request, 'pages/validation_new.html', context)
+
+    def invalid(message):
+        return render(request, 'pages/validation_new.html', {**context, 'error': message}, status=400)
+
+    permit_slug = request.POST.get('permit_slug', '')
+    period = request.POST.get('period', '').strip()
+    upload = request.FILES.get('csv_file')
+    if permit_slug not in context['permit_slugs']:
+        return invalid("Choose a permit from the list.")
+    if not _PERIOD_RE.match(period):
+        return invalid("Period must look like 2026-03 (YYYY-MM).")
+    if upload is None:
+        return invalid("Choose a CSV file to upload.")
+    try:
+        records, row_numbers = parse_lab_csv(upload.read())
+    except LabCsvError as exc:
+        return invalid(str(exc))
+
+    try:
+        run = run_validation(
+            organization=organization,
+            permit_slug=permit_slug,
+            pipeline_slug=LAB_CSV_PIPELINE_SLUG,
+            records=records,
+            period=period,
+            row_numbers=row_numbers,
+        )
+    except InvalidSlugError:
+        return invalid("That permit could not be used.")
+    except EngineError as exc:
+        if exc.run is None:
+            return invalid("The rule engine could not run. Try again.")
+        return redirect('validation_results', run_id=exc.run.pk)
+    return redirect('validation_results', run_id=run.pk)

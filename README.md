@@ -63,7 +63,7 @@ Requires Python 3.12+, [uv](https://docs.astral.sh/uv/), and
 uv sync
 cp .env.example .env   # if present; otherwise set SECRET_KEY at minimum
 uv run python manage.py migrate
-uv run python manage.py createsuperuser   # to reach the evidence pages via /admin/
+uv run python manage.py createsuperuser
 uv run python manage.py runserver
 ```
 
@@ -106,6 +106,6 @@ raco test dsl/         # Racket: both DSLs, evaluator, pipeline, CLI (dsl/tests/
 
 ## Finding your way to the evidence pages
 
-There is no dedicated "run list" page yet (see `docs/ARCHITECTURE.md` for
-what's next). Until then, Django admin (`/admin/`) lists every
-`ValidationRun` with direct links to its results and provenance pages.
+Org users upload a lab CSV at `/validation/runs/new/` and see every run in
+their organization at `/validation/runs/`. Each run links to its results
+and provenance pages.
