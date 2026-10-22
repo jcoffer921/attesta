@@ -42,8 +42,8 @@
                 <div><b>Comparison</b><p>{{ result.comparison }}</p></div>
               </div>
               <p><b>Engine reason:</b> {{ result.reason }}</p>
-              {% if result.gemini_explanation %}
-              <p class="ai-summary"><b>AI explanation:</b> {{ result.gemini_explanation }}</p>
+              {% if result.explanation %}
+              <p class="ai-summary"><b>AI explanation:</b> {{ result.explanation }}</p>
               {% endif %}
               {% if result.clause == "monthly-avg" %}
               {% with key=result.outfall|stringformat:"s"|add:"-"|add:result.parameter %}

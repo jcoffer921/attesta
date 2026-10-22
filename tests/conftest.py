@@ -44,7 +44,7 @@ def org_user(db):
     from apps.accounts.models import User
     from apps.facilities.models import Organization
 
-    org = Organization.objects.create(name='Acme Water', slug='acme-water')
+    org, _ = Organization.objects.get_or_create(slug='acme-water', defaults={'name': 'Acme Water'})
     return User.objects.create_user(username='org-fixture', password='pw', role=User.Role.ORG, organization=org)
 
 

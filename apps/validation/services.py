@@ -71,12 +71,13 @@ def _sha256_of(path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def _fail(*, permit_slug, pipeline_slug, period, code, message,
+def _fail(*, organization, permit_slug, pipeline_slug, period, code, message,
           permit_sha=None, pipeline_sha=None, schema_version=None) -> ValidationRun:
     """Persist a failed ValidationRun with no child rows and raise EngineError."""
     from django.utils import timezone
 
     run = ValidationRun.objects.create(
+        organization=organization,
         permit_slug=permit_slug,
         pipeline_slug=pipeline_slug,
         permit_file_sha256=permit_sha or "",
@@ -91,7 +92,7 @@ def _fail(*, permit_slug, pipeline_slug, period, code, message,
     raise EngineError(code, message)
 
 
-def run_validation(*, permit_slug: str, pipeline_slug: str, records: list, period: str | None = None) -> ValidationRun:
+def run_validation(*, organization, permit_slug: str, pipeline_slug: str, records: list, period: str | None = None) -> ValidationRun:
     """Invoke `racket dsl/main.rkt run`, validate its JSON contract, and
     persist the outcome atomically.
 
@@ -121,7 +122,7 @@ def run_validation(*, permit_slug: str, pipeline_slug: str, records: list, perio
     stdin_payload = json.dumps({"schema_version": EXPECTED_SCHEMA_VERSION, "records": records}).encode("utf-8")
 
     common_fail_kwargs = dict(
-        permit_slug=permit_slug, pipeline_slug=pipeline_slug, period=period,
+        organization=organization, permit_slug=permit_slug, pipeline_slug=pipeline_slug, period=period,
         permit_sha=permit_sha, pipeline_sha=pipeline_sha,
     )
 
@@ -165,6 +166,7 @@ def run_validation(*, permit_slug: str, pipeline_slug: str, records: list, perio
 
     with transaction.atomic():
         run = ValidationRun.objects.create(
+            organization=organization,
             permit_slug=permit_slug,
             pipeline_slug=pipeline_slug,
             permit_file_sha256=permit_sha,

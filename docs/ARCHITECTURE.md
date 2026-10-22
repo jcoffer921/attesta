@@ -28,7 +28,7 @@ changed. `LimitResult`, `ProvenanceEntry`, and `RejectionEntry` fields are
 copied **verbatim** from the engine's JSON — the Django side never
 recomputes or restyles a `status`, `computed_value`, or `reason`.
 
-`LimitResult.gemini_explanation` is the one field not owned by the engine:
+`LimitResult.explanation` is the one field not owned by the engine:
 it's written only by `apps.ai_assist.services.explain_result`, after the
 run has already committed, and only that one field.
 
@@ -95,7 +95,7 @@ id (`prov:<pk>`, `rej:<pk>`, `cite:<key>`). Claude must return JSON
 that shape, cites nothing, cites an id outside the context, or states a
 number the context does not contain.
 
-A verified explanation is written to `gemini_explanation` and
+A verified explanation is written to `explanation` and
 `explanation_refs` (ids plus `citations_version`) via a **targeted
 `.update()`** — not a full model `.save()` — so a concurrent change to other
 fields can't be clobbered. Any failure (API error, network, quota,

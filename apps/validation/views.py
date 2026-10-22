@@ -25,6 +25,15 @@ def badge_class_for(status):
     return STATUS_BADGE_CLASSES.get(status, "badge neutral")
 
 
+def _visible_runs(user):
+    """Runs the user may see: all for admins, own organization's otherwise.
+    Legacy runs with no organization match no org user.
+    """
+    if user.is_admin_role:
+        return ValidationRun.objects.all()
+    return ValidationRun.objects.filter(organization=user.organization)
+
+
 @login_required(login_url='login')
 def permit_rules(request, permit_slug):
     """Renders a permit's limits from the engine's `describe` JSON only.
@@ -91,7 +100,7 @@ def _monthly_avg_chart_series(run, results):
             continue
         history_qs = (
             ValidationRun.objects
-            .filter(permit_slug=run.permit_slug, status='success',
+            .filter(organization=run.organization, permit_slug=run.permit_slug, status='success',
                     results__outfall=result.outfall, results__parameter=result.parameter,
                     results__clause='monthly-avg')
             .exclude(period__isnull=True)
@@ -127,7 +136,7 @@ def validation_results(request, run_id):
     engine call, so it renders normally with a 200 and the stored error
     fields.
     """
-    run = get_object_or_404(ValidationRun, pk=run_id)
+    run = get_object_or_404(_visible_runs(request.user), pk=run_id)
     results = list(run.results.all().order_by('outfall', 'parameter', 'clause'))
     for result in results:
         result.badge_class = badge_class_for(result.status)
@@ -152,7 +161,7 @@ def provenance_timeline(request, run_id):
     point the record stopped progressing -- never silently dropped from the
     view either.
     """
-    run = get_object_or_404(ValidationRun, pk=run_id)
+    run = get_object_or_404(_visible_runs(request.user), pk=run_id)
 
     by_record = defaultdict(lambda: {'steps': [], 'rejection': None})
     for entry in run.provenance_entries.all().order_by('id'):

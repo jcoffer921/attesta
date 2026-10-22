@@ -16,6 +16,16 @@ class ValidationRun(models.Model):
         ("failed", "Failed"),
     ]
 
+    # Nullable only for runs created before tenant scoping existed; those are
+    # visible to admins alone. run_validation requires an organization, so
+    # every new run is scoped.
+    organization = models.ForeignKey(
+        "facilities.Organization",
+        on_delete=models.CASCADE,
+        related_name="validation_runs",
+        null=True,
+        blank=True,
+    )
     permit_slug = models.CharField(max_length=100)
     pipeline_slug = models.CharField(max_length=100)
     permit_file_sha256 = models.CharField(max_length=64, blank=True)
@@ -50,10 +60,10 @@ class LimitResult(models.Model):
     reason = models.TextField()
 
     # Populated only by apps.ai_assist.services.explain_result, after the run
-    # is already committed. Gemini interprets; it never writes a status.
-    gemini_explanation = models.TextField(null=True, blank=True)
+    # is already committed. Claude interprets; it never writes a status.
+    explanation = models.TextField(null=True, blank=True)
     # Ids the explanation cited (prov:/rej:/cite:) and the citation-map
-    # version they were verified against. Written with gemini_explanation.
+    # version they were verified against. Written with explanation.
     explanation_refs = models.JSONField(null=True, blank=True)
 
     def __str__(self):

@@ -158,7 +158,7 @@ def explain_result(limit_result_id: int) -> str:
     explanation, refs = verify_explanation(raw, context)
 
     LimitResult.objects.filter(pk=limit_result_id).update(
-        gemini_explanation=explanation,
+        explanation=explanation,
         explanation_refs={"refs": refs, "citations_version": citations.CITATIONS_VERSION},
     )
     return explanation

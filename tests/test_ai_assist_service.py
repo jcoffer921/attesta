@@ -10,7 +10,7 @@ from apps.validation.models import LimitResult, ProvenanceEntry, RejectionEntry,
 
 def make_result(**overrides):
     run = ValidationRun.objects.create(
-        permit_slug="pa0000000", pipeline_slug="lab-csv-import",
+        organization=None, permit_slug="pa0000000", pipeline_slug="lab-csv-import",
         status="success", schema_version=1,
     )
     fields = dict(
@@ -41,7 +41,7 @@ def test_failed_explanation_does_not_alter_stored_status_or_any_other_field():
 
     after = snapshot(result)
     assert after == before
-    assert result.gemini_explanation is None
+    assert result.explanation is None
 
 
 def model_output(explanation, refs):
@@ -63,7 +63,7 @@ def test_successful_explanation_only_changes_explanation_fields():
     after = snapshot(result)
     assert after == before  # every engine-owned field is untouched
     result.refresh_from_db()
-    assert result.gemini_explanation == explanation == GOOD
+    assert result.explanation == explanation == GOOD
     assert result.explanation_refs == {"refs": ["cite:monthly-avg"], "citations_version": CITATIONS_VERSION}
     assert result.status == "pass"  # explicitly: Claude never wrote status
 
@@ -102,7 +102,7 @@ def test_unverified_explanation_is_rejected_and_nothing_is_written(raw, why):
             explain_result(result.pk)
 
     assert snapshot(result) == before
-    assert result.gemini_explanation is None
+    assert result.explanation is None
     assert result.explanation_refs is None
 
 

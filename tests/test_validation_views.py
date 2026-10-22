@@ -11,7 +11,10 @@ PIPELINE_SLUG = "lab-csv-import"
 
 
 def make_run(**overrides):
-    fields = dict(permit_slug=PERMIT_SLUG, pipeline_slug=PIPELINE_SLUG,
+    from apps.facilities.models import Organization
+
+    org, _ = Organization.objects.get_or_create(slug="acme-water", defaults={"name": "Acme Water"})
+    fields = dict(organization=org, permit_slug=PERMIT_SLUG, pipeline_slug=PIPELINE_SLUG,
                   status="success", schema_version=1, period="2026-03")
     fields.update(overrides)
     return ValidationRun.objects.create(**fields)
@@ -160,3 +163,52 @@ def test_permit_rules_happy_path_renders_describe_output(org_client):
     assert "PA0000000" in content
     assert "TSS" in content
     assert "60" in content and "mg/L" in content
+
+
+# --- tenant isolation ---
+
+@pytest.fixture
+def other_org_run(db):
+    from apps.facilities.models import Organization
+
+    other = Organization.objects.create(name="Other Utility", slug="other-utility")
+    return make_run(organization=other)
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("url_name", ["validation_results", "provenance_timeline"])
+def test_org_user_gets_404_for_another_orgs_run(org_client, other_org_run, url_name):
+    assert org_client.get(reverse(url_name, args=[other_org_run.pk])).status_code == 404
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("url_name", ["validation_results", "provenance_timeline"])
+def test_org_user_gets_404_for_legacy_run_without_organization(org_client, url_name):
+    run = make_run(organization=None)
+    assert org_client.get(reverse(url_name, args=[run.pk])).status_code == 404
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("url_name", ["validation_results", "provenance_timeline"])
+def test_admin_can_open_any_run_including_legacy(admin_client, other_org_run, url_name):
+    legacy = make_run(organization=None)
+    assert admin_client.get(reverse(url_name, args=[other_org_run.pk])).status_code == 200
+    assert admin_client.get(reverse(url_name, args=[legacy.pk])).status_code == 200
+
+
+@pytest.mark.django_db
+def test_chart_history_never_includes_another_orgs_runs(org_client, other_org_run):
+    from apps.validation.views import _monthly_avg_chart_series
+
+    mine = make_run(period="2026-03")
+    make_result(mine, clause="monthly-avg", computed_value="10", threshold="30")
+    other_org_run.period = "2026-02"
+    other_org_run.save()
+    make_result(other_org_run, clause="monthly-avg", computed_value="99", threshold="30")
+    earlier = make_run(period="2026-01")
+    make_result(earlier, clause="monthly-avg", computed_value="12", threshold="30")
+
+    series = _monthly_avg_chart_series(mine, list(mine.results.all()))
+
+    values = [p["value"] for p in series["1-TSS"]["points"]]
+    assert values == [12.0, 10.0]

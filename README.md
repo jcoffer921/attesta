@@ -42,7 +42,7 @@ Python/Racket FFI, no shared memory, easy to test independently:
 3. **Explanation layer** (`apps/ai_assist/services.py`) — reads an
    already-persisted `LimitResult` and asks Claude for a one- or
    two-sentence plain-language explanation, written to its own
-   `gemini_explanation` field via a targeted update. It never touches
+   `explanation` field via a targeted update. It never touches
    `status` or any other engine-owned field.
 
 4. **Evidence views** (`apps/validation/views.py`) — three read-only pages

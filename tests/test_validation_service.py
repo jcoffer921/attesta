@@ -22,17 +22,24 @@ def completed(returncode, stdout="", stderr=""):
                                         stderr=stderr.encode("utf-8"))
 
 
+@pytest.fixture
+def org(db):
+    from apps.facilities.models import Organization
+
+    return Organization.objects.create(name="Svc Org", slug="svc-org")
+
+
 def counts():
     return (ValidationRun.objects.count(), LimitResult.objects.count(),
             ProvenanceEntry.objects.count(), RejectionEntry.objects.count())
 
 
 @pytest.mark.django_db
-def test_nonzero_exit_with_structured_error_persists_failed_run_and_no_children():
+def test_nonzero_exit_with_structured_error_persists_failed_run_and_no_children(org):
     error_body = json.dumps({"error": {"code": "invalid-path", "message": "--permit must be under ..."}})
     with patch("apps.validation.services.subprocess.run", return_value=completed(1, stdout=error_body)):
         with pytest.raises(EngineError) as exc_info:
-            run_validation(permit_slug=PERMIT_SLUG, pipeline_slug=PIPELINE_SLUG, records=RECORDS)
+            run_validation(organization=org, permit_slug=PERMIT_SLUG, pipeline_slug=PIPELINE_SLUG, records=RECORDS)
 
     assert exc_info.value.code == "invalid-path"
     assert counts() == (1, 0, 0, 0)
@@ -42,11 +49,11 @@ def test_nonzero_exit_with_structured_error_persists_failed_run_and_no_children(
 
 
 @pytest.mark.django_db
-def test_timeout_persists_failed_run_with_timeout_code():
+def test_timeout_persists_failed_run_with_timeout_code(org):
     with patch("apps.validation.services.subprocess.run",
                side_effect=subprocess.TimeoutExpired(cmd=["racket"], timeout=30)):
         with pytest.raises(EngineError) as exc_info:
-            run_validation(permit_slug=PERMIT_SLUG, pipeline_slug=PIPELINE_SLUG, records=RECORDS)
+            run_validation(organization=org, permit_slug=PERMIT_SLUG, pipeline_slug=PIPELINE_SLUG, records=RECORDS)
 
     assert exc_info.value.code == "timeout"
     assert counts() == (1, 0, 0, 0)
@@ -54,21 +61,21 @@ def test_timeout_persists_failed_run_with_timeout_code():
 
 
 @pytest.mark.django_db
-def test_malformed_json_on_success_exit_persists_failed_run():
+def test_malformed_json_on_success_exit_persists_failed_run(org):
     with patch("apps.validation.services.subprocess.run", return_value=completed(0, stdout="not json")):
         with pytest.raises(EngineError) as exc_info:
-            run_validation(permit_slug=PERMIT_SLUG, pipeline_slug=PIPELINE_SLUG, records=RECORDS)
+            run_validation(organization=org, permit_slug=PERMIT_SLUG, pipeline_slug=PIPELINE_SLUG, records=RECORDS)
 
     assert exc_info.value.code == "invalid-json"
     assert counts() == (1, 0, 0, 0)
 
 
 @pytest.mark.django_db
-def test_unexpected_schema_version_persists_failed_run():
+def test_unexpected_schema_version_persists_failed_run(org):
     body = json.dumps({"schema_version": 4, "results": [], "provenance": [], "rejections": []})
     with patch("apps.validation.services.subprocess.run", return_value=completed(0, stdout=body)):
         with pytest.raises(EngineError) as exc_info:
-            run_validation(permit_slug=PERMIT_SLUG, pipeline_slug=PIPELINE_SLUG, records=RECORDS)
+            run_validation(organization=org, permit_slug=PERMIT_SLUG, pipeline_slug=PIPELINE_SLUG, records=RECORDS)
 
     assert exc_info.value.code == "unexpected-schema-version"
     run = ValidationRun.objects.get()
@@ -78,7 +85,7 @@ def test_unexpected_schema_version_persists_failed_run():
 
 
 @pytest.mark.django_db
-def test_successful_run_persists_results_exactly_as_returned():
+def test_successful_run_persists_results_exactly_as_returned(org):
     body = json.dumps({
         "schema_version": 3,
         "results": [{
@@ -95,7 +102,7 @@ def test_successful_run_persists_results_exactly_as_returned():
         "rejections": [{"step": "require-field", "record_id": "r2", "reason": "missing required field(s): method"}],
     })
     with patch("apps.validation.services.subprocess.run", return_value=completed(0, stdout=body)):
-        run = run_validation(permit_slug=PERMIT_SLUG, pipeline_slug=PIPELINE_SLUG, records=RECORDS)
+        run = run_validation(organization=org, permit_slug=PERMIT_SLUG, pipeline_slug=PIPELINE_SLUG, records=RECORDS)
 
     assert run.status == "success"
     assert run.permit_file_sha256 and run.pipeline_file_sha256
@@ -114,9 +121,9 @@ def test_successful_run_persists_results_exactly_as_returned():
 
 
 @pytest.mark.django_db
-def test_invalid_slug_is_rejected_before_any_subprocess_call():
+def test_invalid_slug_is_rejected_before_any_subprocess_call(org):
     with patch("apps.validation.services.subprocess.run") as mock_run:
         with pytest.raises(InvalidSlugError):
-            run_validation(permit_slug="../../etc/passwd", pipeline_slug=PIPELINE_SLUG, records=RECORDS)
+            run_validation(organization=org, permit_slug="../../etc/passwd", pipeline_slug=PIPELINE_SLUG, records=RECORDS)
     mock_run.assert_not_called()
     assert counts() == (0, 0, 0, 0)
