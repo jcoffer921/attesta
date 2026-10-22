@@ -10,6 +10,8 @@ from apps.validation.templatetags.validation_extras import decimal_display
     ("57/2", "28.5 (57/2)"),
     ("1/2", "0.5 (1/2)"),
     ("1/3", "≈ 0.3333 (1/3)"),
+    ("<31/3", "≈ <10.3333 (<31/3)"),
+    ("<5", "<5"),
     ("30", "30"),
     ("n/a", "n/a"),
     ("", ""),
